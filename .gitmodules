@@ -7,3 +7,6 @@
 [submodule "zopfli"]
 	path = lib/zopfli
 	url = https://github.com/google/zopfli.git
+[submodule "lib/zopfli"]
+	path = lib/zopfli
+	url = https://github.com/google/zopfli.git
