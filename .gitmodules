@@ -4,9 +4,6 @@
 [submodule "lib/mozjpeg"]
 	path = lib/mozjpeg
 	url = https://github.com/mozilla/mozjpeg.git
-[submodule "zopfli"]
-	path = lib/zopfli
-	url = https://github.com/google/zopfli.git
 [submodule "lib/zopfli"]
 	path = lib/zopfli
 	url = https://github.com/google/zopfli.git
