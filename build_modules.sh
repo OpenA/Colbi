@@ -21,7 +21,7 @@ make shared
 
 # build mozjpeg library
 cd "$PREFIX/lib/mozjpeg"
-cmake . -DENABLE_STATIC=0 -DPNG_SUPPORTED=0 -DWITH_12BIT=1
+cmake . -DENABLE_STATIC=0 -DPNG_SUPPORTED=0 -DWITH_12BIT=0
 make
 
 # build zopfli library

@@ -9,7 +9,7 @@ namespace PngOpts {
 	quint8 quality = 100;
 }
 
-static auto isValidResult(const U8ClampVec &src_png, const U8ClampVec &optim_png, bool lossy) -> int
+static auto isValidResult(const U8ClampVec &src_png, const U8ClampVec &optim_png, bool lossy) -> bool
 {
 	unsigned w, h, cmpW, cmpH;
 	U8ClampVec original, optimized;
@@ -23,14 +23,13 @@ static auto isValidResult(const U8ClampVec &src_png, const U8ClampVec &optim_png
 			if (
 				optimized[i + 0] != original[i + 0] ||
 				optimized[i + 1] != original[i + 1] ||
-				optimized[i + 2] != original[i + 2] ||
-				optimized[i + 3] != (lossy ? 0 : original[i + 3])
-			) {
-				return -1;
-			}
+				optimized[i + 2] != original[i + 2] || !(
+				optimized[i + 3] == original[i + 3] ||  (
+				optimized[i + 3] == 0 && lossy))
+			) { return false; }
 		}
 	}
-	return 0;
+	return same_size;
 }
 
 static auto zoptim(const U8ClampVec &src_png, U8ClampVec &optim_png) -> int
@@ -44,7 +43,7 @@ static auto zoptim(const U8ClampVec &src_png, U8ClampVec &optim_png) -> int
 
 	int ecode = ZopfliPNGOptimize(src_png, png_options, png_options.verbose, &optim_png);
 	if(!ecode) {
-		return 0;//isValidResult(src_png, optim_png, png_options.lossy_transparent);
+		return isValidResult(src_png, optim_png, true) - 1;
 	}
 	return ecode;
 }
@@ -58,7 +57,10 @@ static auto quantz(const quint8 qmin, unsigned &w, unsigned &h, U8ClampVec &raw_
 		LIQ_OK != liq_set_min_opacity       (options, 0) ||
 		LIQ_OK != liq_set_min_posterization (options, 0)) {
 		liq_attr_destroy(options);
-		return -2;
+#ifdef QT_DEBUG
+	qDebug() << "libimagequant: Set Options failed";
+#endif
+		return -1;
 	}
 
 	// Use libimagequant to make a palette for the RGBA pixels
@@ -68,7 +70,10 @@ static auto quantz(const quint8 qmin, unsigned &w, unsigned &h, U8ClampVec &raw_
 	if (LIQ_OK != liq_image_quantize(in_IMG, options, &qResult)) {
 		liq_image_destroy( in_IMG  );
 		liq_attr_destroy ( options );
-		return -3;
+#ifdef QT_DEBUG
+	qDebug() << "libimagequant: Quantization failed";
+#endif
+		return -1;
 	}
 	liq_set_dithering_level(qResult, 1.0);
 
@@ -104,19 +109,19 @@ static auto quantz(const quint8 qmin, unsigned &w, unsigned &h, U8ClampVec &raw_
 static auto decodePixData(U8ClampVec& img, unsigned &w, unsigned &h, U8ClampVec& raw_RGBA_pixels) -> int
 {
 	if (img[0] == 'B' && img[1] == 'M') {
-	  if(img.size() < 54) return -4; //minimum BMP header size
+	  if(img.size() < 54) return -2; //minimum BMP header size
 	  unsigned pix_offset = img[10] + 256 * img[11]; //where the pixel data starts
 	  //read width and height from BMP header
 	  w = img[18] + img[19] * 256;
 	  h = img[22] + img[23] * 256;
 	  //read number of channels from BMP header
-	  if(img[28] != 24 && img[28] != 32) return -5; //only 24-bit and 32-bit BMPs are supported.
+	  if(img[28] != 24 && img[28] != 32) return -3; //only 24-bit and 32-bit BMPs are supported.
 	  //The amount of scanline bytes is width of image times channels, with extra bytes added if needed
 	  //to make it a multiple of 4 bytes.
 	  unsigned char channels  = img[28] / 8;
 	  unsigned int line_bytes = w * channels;
 	  if(line_bytes % 4 != 0) line_bytes = (line_bytes / 4) * 4 + 4;
-	  if(img.size() < line_bytes * h + pix_offset) return -6; //BMP file too small to contain all pixels
+	  if(img.size() < line_bytes * h + pix_offset) return -2; //BMP file too small to contain all pixels
 	  raw_RGBA_pixels.resize(w * h * 4);
 	  const bool rgb = channels == 3;
 	/*
@@ -139,7 +144,7 @@ static auto decodePixData(U8ClampVec& img, unsigned &w, unsigned &h, U8ClampVec&
 	  }
 	  return 0;
 	} else // decode PNG as raw RGBA pixels
-		return lodepng::decode(raw_RGBA_pixels, w, h, img);
+	  return lodepng::decode(raw_RGBA_pixels, w, h, img);
 }
 
 auto PngWrk::optim() -> bool
@@ -153,29 +158,26 @@ auto PngWrk::optim() -> bool
 		const quint8 qmin = PngOpts::quality;
 
 		if (!(ecode = decodePixData(raw_png, w, h, raw_RGBA_pixels))) {
-			if (qmin < 100) {
-				if (!(ecode = quantz(qmin, w, h, raw_RGBA_pixels, quanz_png))) {
-					QCoreApplication::postEvent(m_parent, new TaskEvent(m_index, S_Working, m_rawSize, quanz_png.size()));
-					ecode = zoptim(quanz_png, optim_png);
-				}
-			} else {
-				ecode = lodepng::encode(quanz_png, raw_RGBA_pixels, w, h) ?: zoptim(quanz_png, optim_png);
-			}
-			if(!ecode) {
-				m_optSize = optim_png.size();
-				ecode = lodepng::save_file(optim_png, m_outFile.toUtf8().constData());
+			if (!(ecode = quantz(qmin, w, h, raw_RGBA_pixels, quanz_png))) {
+				QCoreApplication::postEvent(m_parent,
+					new TaskEvent(m_index, S_Working, m_rawSize, quanz_png.size()));
+			} else
+				ecode = lodepng::encode(quanz_png, raw_RGBA_pixels, w, h);
+			if (ecode <= 0)
+				ecode = zoptim(quanz_png, optim_png);
+			if (ecode == 0) {
+				ecode = (m_optSize = optim_png.size()) >= m_rawSize ? -1 :
+				 lodepng::save_file( optim_png, m_outFile.toUtf8().constData() );
 			}
 		}
 	}
 #ifdef QT_DEBUG
-	switch(ecode)
-	{
-	case  0: return true;
-	case -1: qDebug() << "result is not valid"; break;
-	case -2: qDebug() << "libimagequant: Set Options failed"; break;
-	case -3: qDebug() << "libimagequant: Quantization failed"; break;
-	default: qDebug() << "lodepng:" << lodepng_error_text(ecode);
+	switch (ecode) {
+		case -1: qDebug() << "";
+		case -2: qDebug() << "BMP data corrupt or contains wrong header info";
+		case -3: qDebug() << "only 24/32-bit BMPs are supported";
+		default: qDebug() << "lodepng:" << lodepng_error_text(ecode);
 	}
 #endif
-	return !ecode;
+	return ecode == -1 || ecode == 0;
 }

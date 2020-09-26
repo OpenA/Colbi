@@ -34,7 +34,7 @@ auto Colbi::event(QEvent *event) -> bool {
 
 	if (e->m_status > 0)
 		emit statusUpdate((unsigned short)e->m_index, (unsigned char)e->m_status);
-	if (e->m_origSz > 0)
+	if (e->m_newSz  > 0)
 		emit taskProgress((unsigned short)e->m_index, (long long)e->m_origSz, (long long)e->m_newSz);
 
 	return true;

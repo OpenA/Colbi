@@ -22,11 +22,11 @@ ApplicationWindow {
 		"#feeddc"
 	];
 
-	function bytesMagnitude(size) {
-		return (size < 1024 ? size +" b" :
-				size < 1024 * 1024 ? (size / 1024).toFixed(2) +" kb" :
-				size < 1024 * 1024 * 1024 ? (size / 1024 / 1024).toFixed(2) +" Mb" :
-											(size / 1024 / 1024 / 1024).toFixed(2) +" Gb");
+	function bitsMagnitude(size) {
+		return (size < 1e3 ?  size +" b" :
+				size < 1e6 ? (size / 1e3).toFixed(1) +" Kb" :
+				size < 1e9 ? (size / 1e6).toFixed(1  + (size < 1e8 )) +" Mb" :
+							 (size / 1e9).toFixed(1  + (size < 1e11)) +" Gb");
 	}
 
 	Colbi {
@@ -34,18 +34,18 @@ ApplicationWindow {
 		onTaskAdded      : {
 			taskListModel.append({
 				bgColor  : bgColors[Math.round(num / 2 % 1)],
-				fileName : file_name,
-				fileSize : bytesMagnitude(file_size),
+				fileName : file_name.length > 53 ? "..."+ file_name.slice(-50) : file_name,
+				fileSize : bitsMagnitude(file_size),
 				statColor: statColors[status],
-				compress : "0%"
+				compress : ""
 			});
 			_Colbi.runTask(num);
 		}
 		onTaskProgress   : {
-			var compress   = (new_size / orig_size * 100).toFixed(1);
+			var compress   = ((orig_size - new_size) / (orig_size / 100)).toFixed(1);
 			var  task      = taskListModel.get(num);
-			task.fileSize  = bytesMagnitude(new_size);
-			task.compress  = (compress.substr(-1) === "0" ? compress.slice(0,-2) : compress) +"%";
+			task.fileSize  = bitsMagnitude(new_size);
+			task.compress  = compress.replace(".0", "") +"%";
 		}
 		onStatusUpdate   : {
 			var  task      = taskListModel.get(num);
@@ -86,6 +86,72 @@ ApplicationWindow {
 				onClicked    : { fileDialog.open()         }
 			}
 		}
+
+		Rectangle {
+			y      : 8
+			id     : settingsButton
+			color  : "#aaa"
+			width  : 30
+			height : 30
+			radius : 5
+			anchors {
+				right       : parent.right
+				rightMargin : 8
+			}
+
+			Text {
+				anchors.centerIn: parent
+				color : "#fefefe"
+				text  : "S"
+				font  { family: "Arial"; pointSize: 12; bold: true }
+			}
+
+			MouseArea {
+				anchors.fill : parent
+				hoverEnabled : true
+				onEntered    : { parent.color = "#777" }
+				onExited     : { parent.color = "#aaa" }
+				onClicked    : { hpannel.visible ^= 1  }
+			}
+		}
+	}
+
+	Rectangle {
+		z       : 1
+		id      : hpannel
+		color   : "#fefefe"
+		visible : true
+		anchors.fill: parent
+
+		Button {
+			id: button
+			x: 0
+			y: 54
+			text: qsTr("Button")
+		}
+
+		Button {
+			id: button1
+			x: 0
+			y: 8
+			text: qsTr("Button")
+		}
+
+
+  TabBar {
+	  id: tabBar
+	  x: 98
+	  y: 0
+	  width: 542
+	  height: 480
+  }
+  StackView {
+	  id: stackView
+	  x: 98
+	  y: 0
+	  width: 548
+	  height: 480
+  }
 	}
 
 	ListModel {
@@ -122,7 +188,7 @@ ApplicationWindow {
 					anchors {
 						left        : parent.left
 						right       : parent.right
-						rightMargin : 140
+						rightMargin : 100 + col_crn.width
 						leftMargin  : 5
 					}
 					Text {
@@ -132,15 +198,33 @@ ApplicationWindow {
 					}
 				}
 				Column {
+					id: col_crn
+					padding : 5
+					anchors {
+						right       : parent.right
+						rightMargin : 98
+					}
+					Text {
+						text  : model.compress
+						color : "#4aa54a"
+						font  { family: "monospace"; italic: true }
+						Text {
+							anchors.left : parent.right;
+							text  : model.compress ? "~" : ""
+							color : parent.color
+						}
+					}
+				}
+				Column {
 					padding : 5
 					anchors {
 						right       : parent.right;
-						rightMargin : 50
+						rightMargin : 35
 					}
 					Text {
-						text  : model.fileSize
-						color : "#666"
-						font  { family: "monospace" }
+						text  : model.fileSize.substring(0, model.fileSize.indexOf(" "));
+						color : "#755151"
+						font  { family: "monospace"  }
 					}
 				}
 				Column {
@@ -150,12 +234,38 @@ ApplicationWindow {
 						rightMargin : 0
 					}
 					Text {
-						text  : model.compress
-						color : "gray"
-						font  { family: "monospace" }
+						width : 30
+						text  : model.fileSize.substring(model.fileSize.indexOf(" ") + 1);
+						color : "#666"
+						font  { family: "serif" }
 					}
 				}
 			}
+			/*Component.onCompleted: {
+				taskListModel.append({
+					fileName: "test.png",
+					bgColor: bgColors[0],
+					statColor: "transparent",
+					fileSize: bitsMagnitude(480),
+					compress: "99.5%"
+				});
+				var jpg = "teh6hh4rh646h4h646rh6426h6hh4rh4h4h646h4h64hs4hst.jpg"
+				taskListModel.append({
+					fileName: jpg.length > 53 ? "..."+ jpg.slice(-50) : jpg,
+					bgColor: bgColors[1],
+					statColor: "transparent",
+					fileSize: bitsMagnitude(882465288465),
+					compress: "35.0%"
+				});
+				var gif = "teseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hst.gif"
+				taskListModel.append({
+					fileName: gif.length > 53 ? "..."+ gif.slice(-50) : gif,
+					bgColor: bgColors[0],
+					statColor: "transparent",
+					fileSize: bitsMagnitude(511882465),
+					compress: "78.2%"
+				});
+			}*/
 		}
 	}
 
