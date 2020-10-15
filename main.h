@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QMimeDatabase>
+#include <QSettings>
 #include <QFileInfo>
 #include <QFuture>
 #include <QObject>
@@ -74,7 +75,8 @@ private:
 	void taskWorker( QString, QString, QString, qint64 );
 
 public:
-	~Colbi() {};
+	QSettings *m_settings;
+	explicit Colbi( QObject *parent = nullptr ); ~Colbi();
 	bool event(QEvent *event) override;
 
 signals:
@@ -137,4 +139,8 @@ protected:
 public:
 	using ImgWrk::ImgWrk;
 };
+
+auto qFileLoad (const QString, QByteArray &) -> bool;
+auto qFileStore(const QString, QByteArray &) -> bool;
+
 #endif // MAIN_H

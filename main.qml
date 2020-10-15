@@ -120,7 +120,7 @@ ApplicationWindow {
 		z       : 1
 		id      : hpannel
 		color   : "#fefefe"
-		visible : true
+		visible : false
 		anchors.fill: parent
 
 		Button {

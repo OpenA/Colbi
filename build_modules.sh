@@ -1,6 +1,7 @@
 #!/bin/sh
 
-PREFIX="$PWD"
+PREFIX:="$PWD"
+STABLE:="$1"
 
 git_reset_stable() {
 	git -C 'lib/libimagequant' reset --hard cfda870
@@ -10,7 +11,7 @@ git_reset_stable() {
 
 git submodule update --init --recursive
 
-if [[ $1 = "stable" ]]
+if [[ $STABLE == 'stable' ]]
 	then git_reset_stable
 fi
 

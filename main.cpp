@@ -1,6 +1,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-
+#include <QStandardPaths>
 #include <main.h>
 
 namespace GlobalOpts {
@@ -22,6 +22,16 @@ auto ImgWrk::restart (QString out, qint64 size) -> void {
 	m_rawSize = size;
 	m_optSize = 0;
 	stop(), start();
+}
+
+Colbi::Colbi(QObject *parent) : QObject(parent) {
+	//QString cfg = QStandardPaths::locate(QStandardPaths::ConfigLocation, "Colbi_formats.ini", QStandardPaths::LocateFile);
+	//m_settings = new QSettings(cfg, QSettings::IniFormat);
+}
+Colbi::~Colbi() {
+	/*for (TWrk *wk : taskList) {
+		wk->stop();
+	}*/
 }
 
 auto Colbi::event(QEvent *event) -> bool {
@@ -97,6 +107,28 @@ auto Colbi::addTask  ( const QString path) -> void {
 			taskWorker(fi.fileName(), absfile, outfile, size );
 		}
 	}
+}
+
+auto qFileLoad(const QString path, QByteArray &blob) -> bool
+{
+	QFile file(path);
+	 bool ok;
+	if (( ok = file.open(QIODevice::ReadOnly))) {
+		blob = file.readAll();
+		file.close();
+	}
+	return ok;
+}
+
+auto qFileStore(const QString path, QByteArray &blob) -> bool
+{
+	QFile file(path);
+	 bool ok;
+	if (( ok = file.open(QIODevice::WriteOnly))) {
+		file.write(blob);
+		file.close();
+	}
+	return ok;
 }
 
 int main(int argc, char *argv[])
