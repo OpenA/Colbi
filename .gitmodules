@@ -1,9 +1,0 @@
-[submodule "lib/libimagequant"]
-	path = lib/libimagequant
-	url = https://github.com/ImageOptim/libimagequant.git
-[submodule "lib/mozjpeg"]
-	path = lib/mozjpeg
-	url = https://github.com/mozilla/mozjpeg.git
-[submodule "lib/zopfli"]
-	path = lib/zopfli
-	url = https://github.com/google/zopfli.git
