@@ -1,5 +1,5 @@
 #include <main.h>
-#include <lib/mozjpeg/jpeglib.h>
+#include <jpeglib.h>
 
 static auto mozjInit(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, const unsigned char* src_jpg, const unsigned long src_size) -> void
 {
@@ -26,17 +26,25 @@ static auto mozjInit(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, const uns
 	jpeg_c_set_int_param(dstinfo, JINT_COMPRESS_PROFILE, JCP_MAX_COMPRESSION);
 }
 
-static auto mozjLosslessOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, unsigned char **out_jpg, unsigned long *out_size, bool progressive) -> void
+static inline auto mozj_set_encmethods(j_compress_ptr dstinfo, bool progressive, bool arithmetic) -> void {
+	if (progressive)
+		jpeg_simple_progression(dstinfo);
+#ifdef C_ARITH_CODING_SUPPORTED
+	dstinfo->optimize_coding = arithmetic ? FALSE : TRUE;
+	dstinfo->arith_code      = arithmetic ? TRUE : FALSE;
+#else
+	dstinfo->optimize_coding = TRUE;
+#endif
+}
+
+static auto mozjLosslessOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, unsigned char **out_jpg, unsigned long *out_size, bool progressive, bool arithmetic) -> void
 {
 	/* Read source file as DCT coefficients */
 	jvirt_barray_ptr *coef_arrays = jpeg_read_coefficients(srcinfo);
 	/* Initialize destination compression parameters from source values */
 	jpeg_copy_critical_parameters(srcinfo, dstinfo);
-	if (progressive) jpeg_simple_progression(dstinfo);
-	dstinfo->optimize_coding = TRUE;
-#ifdef C_ARITH_CODING_SUPPORTED
-	dstinfo->arith_code = TRUE;
-#endif
+	/* Set progressive/baseline & arithmetic/huffman encode methods */
+	mozj_set_encmethods(dstinfo, progressive, arithmetic);
 	/* Fill output img buffer */
 	jpeg_mem_dest(dstinfo, out_jpg, out_size);
 	/* Start compressor (note no image data is actually written here) */
@@ -45,7 +53,7 @@ static auto mozjLosslessOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, 
 	jpeg_finish_decompress( srcinfo );
 }
 
-static auto mozjLossyOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, unsigned char **out_jpg, unsigned long *out_size, bool progressive, char quality) -> void
+static auto mozjLossyOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, unsigned char **out_jpg, unsigned long *out_size, bool progressive, bool arithmetic, char quality) -> void
 {
 	JDIMENSION max_scanlines = 8 * srcinfo->max_v_samp_factor;
 	JSAMPARRAY plane_pointer[4];
@@ -63,19 +71,13 @@ static auto mozjLossyOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, uns
 	dstinfo->image_height     = srcinfo->image_height;
 
 	jpeg_set_colorspace(dstinfo, srcinfo->jpeg_color_space);
-	jpeg_set_quality   (dstinfo, quality, progressive);
-	if (progressive) jpeg_simple_progression(dstinfo);
+	jpeg_set_quality   (dstinfo, quality, (progressive ? TRUE : FALSE));
+	mozj_set_encmethods(dstinfo, progressive, arithmetic);
 
 	dstinfo->max_v_samp_factor = srcinfo->max_v_samp_factor;
 	dstinfo->max_h_samp_factor = srcinfo->max_h_samp_factor;
 	dstinfo->raw_data_in       = TRUE;
-	dstinfo->optimize_coding   = TRUE;
-#if JPEG_LIB_VERSION >= 70
-	dstinfo->do_fancy_upsampling = FALSE;
-#endif
-#ifdef C_ARITH_CODING_SUPPORTED
-	dstinfo->arith_code = TRUE;
-#endif
+
 	for (int i = 0; i < dstinfo->input_components; i++) {
 	  dstinfo->comp_info[i].h_samp_factor = srcinfo->comp_info[i].h_samp_factor;
 	  dstinfo->comp_info[i].v_samp_factor = srcinfo->comp_info[i].v_samp_factor;
@@ -105,24 +107,27 @@ auto JpgWrk::optim() -> bool
 		unsigned long out_size = 0;
 		unsigned char*out_data = nullptr;
 
+		unsigned nail    = 100;
 		char quality     = 90;
 		bool progressive = true;
+		bool arithmetic  = true;
 
 		j_decompress_ptr srcinfo = new jpeg_decompress_struct;
 		j_compress_ptr   dstinfo = new jpeg_compress_struct;
 
 		try {
 			mozjInit(srcinfo, dstinfo, reinterpret_cast<unsigned char*>(jpg_img.data()), jpg_img.size());
-			mozjLosslessOptim(srcinfo, dstinfo, &out_data, &out_size, progressive);
+			mozjLosslessOptim(srcinfo, dstinfo, &out_data, &out_size, progressive, arithmetic);
 
 			if (quality >= 0) {
 				unsigned long tmp_size = out_size, best_size = 0;
 				unsigned char*tmp_data = nullptr;
+
 				do {
 					jpeg_mem_src    (srcinfo,        (!best_size ? out_data : tmp_data), tmp_size);
 					jpeg_read_header(srcinfo, TRUE);   best_size = tmp_size;
-					mozjLossyOptim  (srcinfo, dstinfo, &tmp_data, &tmp_size, progressive, (quality > 100 ? 100 : quality));
-				} while (tmp_size < best_size);
+					mozjLossyOptim  (srcinfo, dstinfo, &tmp_data, &tmp_size, progressive, arithmetic, (quality > 100 ? 100 : quality));
+				} while (nail < (best_size - tmp_size));
 
 				if (tmp_size < out_size) {
 					out_data = tmp_data;

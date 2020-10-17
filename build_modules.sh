@@ -1,7 +1,7 @@
 #!/bin/sh
 
-PREFIX:="$PWD"
-STABLE:="$1"
+LIBDIR="$PWD/lib"
+STABLE="$1"
 
 git_reset_stable() {
 	git -C 'lib/libimagequant' reset --hard cfda870
@@ -16,17 +16,17 @@ if [[ $STABLE == 'stable' ]]
 fi
 
 # build imagequanl library
-cd "$PREFIX/lib/libimagequant"
+cd "$LIBDIR/libimagequant"
 ./configure --enable-sse
 make shared
 
 # build mozjpeg library
-cd "$PREFIX/lib/mozjpeg"
-cmake . -DENABLE_STATIC=0 -DPNG_SUPPORTED=0 -DWITH_12BIT=0
+cd "$LIBDIR/mozjpeg"
+cmake .. -DENABLE_STATIC=0 -DWITH_TURBOJPEG=0 -DPNG_SUPPORTED=0 -DWITH_JPEG8=1 -DWITH_ARITH_ENC=1 -DWITH_ARITH_DEC=1
 make
 
 # build zopfli library
-cd "$PREFIX/lib/zopfli"
+cd "$LIBDIR/zopfli"
 make libzopflipng
 ln -s libzopflipng.so.* libzopflipng.so.1
 ln -s libzopflipng.so.1 libzopflipng.so
