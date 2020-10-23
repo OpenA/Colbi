@@ -1,4 +1,4 @@
-import QtQuick 2.14
+﻿import QtQuick 2.14
 import QtQuick.Controls 2.14
 import QtQuick.Dialogs 1.0
 import git.OpenA.Colbi 1.0
@@ -11,12 +11,13 @@ ApplicationWindow {
 	visible : true
 	color   : "floralwhite"
 
-	property var statColors : {
-		0: "transparent",
-		1: "darkcyan",
-		2: "#00C963",
-		3: "#cd0000"
-	};
+	property var statColors : [
+		"transparent",
+		"darkcyan",
+		"#00C963",
+		"orange",
+		"#cd0000"
+	];
 	property var bgColors : [
 		"floralwhite",
 		"#feeddc"
@@ -42,14 +43,17 @@ ApplicationWindow {
 			_Colbi.runTask(num);
 		}
 		onTaskProgress   : {
-			var compress   = ((orig_size - new_size) / (orig_size / 100)).toFixed(1);
-			var  task      = taskListModel.get(num);
-			task.fileSize  = bitsMagnitude(new_size);
-			task.compress  = compress.replace(".0", "") +"%";
+			var compress  = (orig_size - new_size) / (orig_size / 100), p = compress < 1;
+			var  task     = taskListModel.get(num);
+			task.fileSize = bitsMagnitude(new_size);
+			task.compress = compress.toFixed(1 + p).replace((p ? ".00" : ".0"), "") +"%";
 		}
 		onStatusUpdate   : {
 			var  task      = taskListModel.get(num);
 			task.statColor = statColors[status];
+			if (!status) {
+				task.compress = "";
+			}
 		}
 	}
 
@@ -86,72 +90,425 @@ ApplicationWindow {
 				onClicked    : { fileDialog.open()         }
 			}
 		}
+	}
 
-		Rectangle {
-			y      : 8
-			id     : settingsButton
-			color  : "#aaa"
-			width  : 30
-			height : 30
-			radius : 5
+	Rectangle {
+		z      : 2
+		y      : 8
+		id     : settingsButton
+		color  : "#aaa"
+		width  : 30
+		height : 30
+		radius : 5
+		anchors {
+			right       : parent.right
+			rightMargin : 8
+		}
+
+		Text {
+			anchors.centerIn: parent
+			color : "#fefefe"
+			text  : "S"
+			font  { family: "Arial"; pointSize: 12; bold: true }
+		}
+
+		MouseArea {
+			anchors.fill : parent
+			hoverEnabled : true
+			onEntered    : { parent.color = "#777" }
+			onExited     : { parent.color = "#aaa" }
+			onClicked    : { sPannel.visible ^= 1  }
+		}
+	}
+
+	property int sPANNEL_BTN_WIDTH  : 100
+	property int sPANNEL_BTN_HEIGHT : 40
+
+	Rectangle {
+		z       : 1
+		id      : sPannel
+		visible : true
+		color   : "#fefefe"
+		anchors.fill: parent
+
+		property int selectIdx : 0
+
+		Item {
+			id: btnsGroup
+			clip : true
+			width: sPANNEL_BTN_WIDTH + 16
 			anchors {
-				right       : parent.right
-				rightMargin : 8
+				top   : parent.top
+				left  : parent.left
+				bottom: parent.bottom
+			}
+			Rectangle {
+				id: btnGeneral
+				x: 8
+				y: 4
+				width: sPANNEL_BTN_WIDTH
+				height: sPANNEL_BTN_HEIGHT
+				color: "#fefefe"
+				radius : 4
+				border { color: "#ccc"; width: 2 }
+				Text {
+					text: qsTr("General")
+					anchors.centerIn: parent
+					font.pixelSize: 16
+				}
+				MouseArea {
+					anchors.fill : parent
+					onClicked    : switchPannel(0, sPannel.selectIdx)
+				}
+			}
+			Rectangle {
+				id: btnJPEG
+				x      : 4
+				y      : 45
+				width  : sPANNEL_BTN_WIDTH
+				height : sPANNEL_BTN_HEIGHT
+				radius : 4
+				color  : "#dedede"
+				border { color: "#dedede"; width: 1 }
+				Text {
+					text: qsTr("JPEG")
+					anchors.centerIn: parent
+					font.pixelSize: 16
+				}
+				MouseArea {
+					anchors.fill : parent
+					onClicked    : switchPannel(1, sPannel.selectIdx)
+				}
+			}
+			Rectangle {
+				id: btnPNG
+				x: 4
+				y: 86
+				width: sPANNEL_BTN_WIDTH
+				height: sPANNEL_BTN_HEIGHT
+				color: "#dedede"
+				radius : 4
+				border { color: "#dedede"; width: 1 }
+				Text {
+					text: qsTr("PNG")
+					anchors.centerIn: parent
+					font.pixelSize: 16
+				}
+				MouseArea {
+					anchors.fill : parent
+					onClicked    : switchPannel(2, sPannel.selectIdx)
+				}
+			}
+			Rectangle {
+				id: btnGIF
+				x: 4
+				y: 127
+				width: sPANNEL_BTN_WIDTH
+				height: sPANNEL_BTN_HEIGHT
+				color: "#dedede"
+				radius : 4
+				border { color: "#dedede"; width: 1 }
+				Text {
+					text: qsTr("GIF")
+					anchors.centerIn: parent
+					font.pixelSize: 16
+				}
+				MouseArea {
+					anchors.fill : parent
+					onClicked    : switchPannel(3, sPannel.selectIdx)
+				}
+			}
+			Rectangle {
+				id: btnWebP
+				x: 4
+				y: 168
+				width: sPANNEL_BTN_WIDTH
+				height: sPANNEL_BTN_HEIGHT
+				color: "#dedede"
+				radius : 4
+				border { color: "#dedede"; width: 1 }
+				Text {
+					text: qsTr("WebP")
+					anchors.centerIn: parent
+					font.pixelSize: 16
+				}
+				MouseArea {
+					anchors.fill : parent
+					onClicked    : switchPannel(4, sPannel.selectIdx)
+				}
+			}
+		}
+
+		Item {
+			id: setsGroup
+
+			anchors {
+				fill: parent
+				leftMargin: sPANNEL_BTN_WIDTH + 28
 			}
 
-			Text {
-				anchors.centerIn: parent
-				color : "#fefefe"
-				text  : "S"
-				font  { family: "Arial"; pointSize: 12; bold: true }
-			}
-
-			MouseArea {
+			Item {
+				id           : setGeneral
+				visible      : true
 				anchors.fill : parent
-				hoverEnabled : true
-				onEntered    : { parent.color = "#777" }
-				onExited     : { parent.color = "#aaa" }
-				onClicked    : { hpannel.visible ^= 1  }
+
+				property int theme: _Colbi.getParamInt("General/colorTheme")
+
+				Row {
+					y             : 20
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					CheckBox {
+					//	id        : g_moveToTemp
+						text      : qsTr("Move originals to temporary dir")
+						font      { pixelSize: 18 }
+						checked   : _Colbi.getParamBool("General/moveToTemp");
+						onClicked : _Colbi.setOptionBool("General/moveToTemp", checked);
+					}
+				}
+				Row {
+					y             : 75
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Text {
+						verticalAlignment : Text.AlignVCenter
+						font.pixelSize    : 18
+						height            : 32
+						text              : qsTr("Color Theme:  ")
+					}
+					ComboBox {
+						currentIndex          : setGeneral.theme
+						height                : 32
+						model                 : ["Light Cream", "Dark Brown", "Dark Blue"]
+						onCurrentIndexChanged : {
+							if (setGeneral.theme !== currentIndex)
+								_Colbi.setOptionInt("General/colorTheme", (setGeneral.theme = currentIndex));
+						}
+					}
+				}
+				Row {
+					y             : 130
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Text {
+						height            : 32
+						text              : qsTr("original_name")
+						font { pixelSize  : 18; italic: true }
+						verticalAlignment : Text.AlignVCenter
+					}
+					TextField {
+					//	id               : g_namePattern
+						width            : 140
+						height           : 32
+						text             : _Colbi.getParamStr("General/namePattern");
+						font { pixelSize : 18; italic: true }
+						selectByMouse    : true
+						placeholderText  : qsTr("__optimized__")
+						onEditingFinished: _Colbi.setOptionStr("General/namePattern", text);
+					}
+					Text {
+						height            : 32
+						text              : qsTr(".jpg")
+						font { pixelSize  : 18; italic: true }
+						verticalAlignment : Text.AlignVCenter
+					}
+				}
+			}
+			Item {
+				id           : setJPEG
+				visible      : false
+				anchors.fill : parent
+
+				property int arith: _Colbi.getParamBool("JPEG/arithmetic")
+				property int  qmax: _Colbi.getParamInt("JPEG/maxQuality")
+
+				Row {
+					y             : 20
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					CheckBox {
+					//	id        : jpg_Progressive
+						text      : qsTr("Progressive")
+						font      { pixelSize: 18 }
+						checked   : _Colbi.getParamBool("JPEG/progressive");
+						onClicked : _Colbi.setOptionBool("JPEG/progressive", checked);
+					}
+				}
+				Row {
+					y             : 75
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Text {
+						verticalAlignment : Text.AlignVCenter
+						font.pixelSize    : 18
+						height            : 32
+						text              : qsTr("DCT Algorithm:  ")
+					}
+					ComboBox {
+						currentIndex          : setJPEG.arith
+						height                : 32
+						model                 : ["Huffman", "Arithmetic"]
+						onCurrentIndexChanged : {
+							if (setJPEG.arith !== currentIndex)
+								_Colbi.setOptionBool("JPEG/arithmetic", Boolean(setJPEG.arith = currentIndex));
+						}
+					}
+				}
+				Row {
+					y             : 130
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					RadioButton {
+					//	id        : jpg_lossless
+						height    : 32
+						text      : qsTr("Lossless")
+						checked   : setJPEG.qmax < 0
+						onClicked : {
+							_Colbi.setOptionInt("JPEG/maxQuality", -(jpg_max_quality.value));
+							jpg_max_quality.enabled = false;
+						}
+					}
+					RadioButton {
+					//	id        : jpg_lossy
+						height    : 32
+						text      : qsTr("Lossy")
+						checked   : setJPEG.qmax > 0
+						onClicked : {
+							_Colbi.setOptionInt("JPEG/maxQuality", jpg_max_quality.value);
+							jpg_max_quality.enabled = true;
+						}
+					}
+				}
+				Row {
+					y             : 175
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Slider {
+						id             : jpg_max_quality
+						height         : 32
+						from           : 0
+						to             : 100
+						stepSize       : 1
+						enabled        : setJPEG.qmax > 0
+						value          : Math.abs(setJPEG.qmax)
+						onValueChanged : {
+							if (enabled && setJPEG.qmax !== value)
+								_Colbi.setOptionInt("JPEG/maxQuality", (setJPEG.qmax = value));
+						}
+					}
+					Text {
+						height             : 32
+						color              : "gray"
+						text               : jpg_max_quality.value +"%"
+						font   { pixelSize : 18; italic: true }
+						verticalAlignment  : Text.AlignVCenter
+					}
+				}
+			}
+			Item {
+				id      : setPNG
+				visible : false
+
+				property int qmin: _Colbi.getParamInt("PNG/minQuality")
+
+				Row {
+					y             : 20
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					CheckBox {
+					//	id        : png_8bitColors
+						text      : qsTr("Convert all to 8bit pallete")
+						font      { pixelSize: 18 }
+						checked   : _Colbi.getParamBool("PNG/8bitColors");
+						onClicked : _Colbi.setOptionBool("PNG/8bitColors", checked);
+					}
+				}
+				Row {
+					y             : 140
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Text {
+						height : 32
+						text   : qsTr("Quantization quality:")
+						font   { pixelSize: 16; italic: true }
+						verticalAlignment : Text.AlignVCenter
+					}
+				}
+				Row {
+					y             : 175
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Slider {
+						id             : png_min_quality
+						height         : 32
+						from           : 0
+						to             : 100
+						stepSize       : 1
+						snapMode       : Slider.SnapAlways
+						value          : setPNG.qmin
+						onValueChanged : {
+							if (setPNG.qmin !== value)
+								_Colbi.setOptionInt("PNG/minQuality", (setPNG.qmin = value));
+						}
+					}
+					Text {
+						height : 32
+						color  : "gray"
+						text   : png_min_quality.value +"%"
+						font   { pixelSize: 18; italic: true }
+						verticalAlignment : Text.AlignVCenter
+					}
+				}
+			}
+			Item {
+				id: setGIF
+				visible: false
+				CheckBox {
+					x: 51
+					y: 34
+					text: qsTr("Gif")
+				}
+			}
+			Item {
+				id: setWebP
+				visible: false
+				CheckBox {
+					x: 51
+					y: 34
+					text: qsTr("WebP")
+				}
 			}
 		}
 	}
 
-	Rectangle {
-		z       : 1
-		id      : hpannel
-		color   : "#fefefe"
-		visible : false
-		anchors.fill: parent
+	function switchPannel(newIdx, oldIdx) {
 
-		Button {
-			id: button
-			x: 0
-			y: 54
-			text: qsTr("Button")
+		if (oldIdx >= 0) {
+			const oldBtn = btnsGroup.children[oldIdx];
+			const oldSet = setsGroup.children[oldIdx];
+			oldBtn.x     = 4;
+			oldBtn.border.color = oldBtn.color = "#dedede";
+			oldBtn.border.width = 1;
+			oldSet.visible      = false;
 		}
-
-		Button {
-			id: button1
-			x: 0
-			y: 8
-			text: qsTr("Button")
-		}
-
-
-  TabBar {
-	  id: tabBar
-	  x: 98
-	  y: 0
-	  width: 542
-	  height: 480
-  }
-  StackView {
-	  id: stackView
-	  x: 98
-	  y: 0
-	  width: 548
-	  height: 480
-  }
+		const newBtn = btnsGroup.children[newIdx];
+		const newSet = setsGroup.children[newIdx];
+		newBtn.color = "#fefefe";
+		newBtn.x     = 8;
+		newBtn.border.width = 2;
+		newBtn.border.color = "#ccc";
+		newSet.visible      = true;
+		sPannel.selectIdx   = newIdx;
 	}
 
 	ListModel {
@@ -240,32 +597,25 @@ ApplicationWindow {
 						font  { family: "serif" }
 					}
 				}
+				MouseArea {
+					anchors.fill: parent
+					acceptedButtons: Qt.LeftButton | Qt.RightButton
+					onClicked: {
+						if (mouse.button === Qt.RightButton)
+							contextMenu.popup()
+					}
+					onPressAndHold: {
+						if (mouse.source === Qt.MouseEventNotSynthesized)
+							contextMenu.popup()
+					}
+					Menu {
+						id: contextMenu
+						MenuItem { text: "Show Store" }
+						MenuItem { text: "Pause" ; onClicked: _Colbi.waitTask(index) }
+						MenuItem { text: "Cancel"; onClicked: _Colbi.killTask(index) }
+					}
+				}
 			}
-			/*Component.onCompleted: {
-				taskListModel.append({
-					fileName: "test.png",
-					bgColor: bgColors[0],
-					statColor: "transparent",
-					fileSize: bitsMagnitude(480),
-					compress: "99.5%"
-				});
-				var jpg = "teh6hh4rh646h4h646rh6426h6hh4rh4h4h646h4h64hs4hst.jpg"
-				taskListModel.append({
-					fileName: jpg.length > 53 ? "..."+ jpg.slice(-50) : jpg,
-					bgColor: bgColors[1],
-					statColor: "transparent",
-					fileSize: bitsMagnitude(882465288465),
-					compress: "35.0%"
-				});
-				var gif = "teseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hseh6hh4rh4h4h646h4h64hst.gif"
-				taskListModel.append({
-					fileName: gif.length > 53 ? "..."+ gif.slice(-50) : gif,
-					bgColor: bgColors[0],
-					statColor: "transparent",
-					fileSize: bitsMagnitude(511882465),
-					compress: "78.2%"
-				});
-			}*/
 		}
 	}
 

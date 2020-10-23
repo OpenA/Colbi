@@ -3,9 +3,7 @@
 
 #include <QCoreApplication>
 #include <QtConcurrent/QtConcurrentRun>
-#include <QMimeDatabase>
 #include <QSettings>
-#include <QFileInfo>
 #include <QFuture>
 #include <QObject>
 #include <QString>
@@ -21,27 +19,28 @@ enum {
 	S_Idle = 0,
 	S_Working ,
 	S_Complete,
+	S_Paused  ,
 	S_Error   ,
 	S_Unknown
 };
 
-enum {
+enum IMG_T {
 	PNG = 0,
 	JPG,
 	GIF,
 	BMP,
 	WebP
-} IMG;
+};
 
 /* QEvent extends for tasks */
 class TaskEvent : public QEvent
 {
 public:
-	qint64  m_origSz, m_newSz;
+	size_t  m_origSz, m_newSz;
 	quint16 m_index;
 	quint8  m_status;
 
-	TaskEvent(quint16 i, quint8 s, qint64 o = 0, qint64 n = 0) : QEvent( User )
+	TaskEvent(quint16 i, quint8 s, size_t o = 0, size_t n = 0) : QEvent( User )
 	{
 		m_status = s, m_index = i;
 		m_origSz = o, m_newSz = n;
@@ -60,24 +59,27 @@ public:
 	virtual void start() {}
 	virtual void pause() {}
 	virtual void stop () {}
-	virtual void restart(QString, qint64) {}
+
+	virtual void reload(size_t) {}
 };
 
 /* Main Class */
 class Colbi : public QObject
 {
 	Q_OBJECT
-
 private:
+	QSettings *m_settings;
 	QStringList  fileList;
 	QList<TWrk*> taskList;
 
-	void taskWorker( QString, QString, QString, qint64 );
+	void taskWorker( QString, QString, qint64 );
 
 public:
-	QSettings *m_settings;
 	explicit Colbi( QObject *parent = nullptr ); ~Colbi();
 	bool event(QEvent *event) override;
+
+	bool qFileLoad (const quint16, QByteArray &);
+	bool qFileStore(const quint16, QByteArray &, IMG_T);
 
 signals:
 	void taskProgress( unsigned short num, long long orig_size, long long new_size  );
@@ -89,6 +91,14 @@ public slots:
 	void runTask  ( const quint16 );
 	void waitTask ( const quint16 );
 	void killTask ( const quint16 );
+
+	QString getParamStr ( const QString );
+	bool    getParamBool( const QString );
+	int     getParamInt ( const QString );
+
+	void setOptionStr ( const QString, QString );
+	void setOptionBool( const QString, bool    );
+	void setOptionInt ( const QString, int     );
 };
 
 /* Image Worker Base Class */
@@ -97,50 +107,54 @@ class ImgWrk : public TWrk
 protected:
 	quint16 m_index;
 	Colbi*  m_parent;
-	QFuture <void>     m_future;
-	QString m_inFile , m_outFile;
-	qint64  m_rawSize, m_optSize;
+	QFuture <void> m_future;
+	size_t  m_rawSize, m_optSize;
+	qint8   m_quality;
 
 	virtual bool optim() = 0;
 	virtual void work();
 
 public:
-	explicit ImgWrk(Colbi *p, quint16 n, qint64 s, QString i, QString o) : TWrk(false)
+	explicit ImgWrk(Colbi *p, quint16 n, size_t s, qint8 q) : TWrk(false)
 	{
-		m_parent = p, m_rawSize = s, m_inFile  = i;
-		m_index  = n, m_optSize = 0, m_outFile = o;
+		m_parent = p, m_rawSize = s; m_quality = q;
+		m_index  = n, m_optSize = 0;
 	}
 	~ImgWrk() { stop(); }
 
-	void start () override;
-	void pause () override;
-	void stop  () override;
-	void restart (QString, qint64) override;
+	void start() override;
+	void pause() override;
+	void stop () override;
 };
 
 /* PNG Worker Extends */
 class PngWrk : public ImgWrk
 {
-private:
-	//int quantz(const U8ClampVec&, U8ClampVec&);
 protected:
+	bool m_8bit;
 	bool optim() override;
 public:
-	using ImgWrk::ImgWrk;
+	explicit PngWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool c) : ImgWrk(p,n,s,q)
+	{
+		m_8bit = c;
+	}
+
+	void reload(size_t) override;
 };
 
 /* JPEG Worker Extends */
 class JpgWrk : public ImgWrk
 {
-private:
-	//int optim(const U8ClampVec&, U8ClampVec&);
 protected:
+	bool m_progressive, m_arithmetic;
 	bool optim() override;
 public:
-	using ImgWrk::ImgWrk;
+	explicit JpgWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool o, bool a) : ImgWrk(p,n,s,q)
+	{
+		m_progressive = o;
+		m_arithmetic  = a;
+	}
+	void reload(size_t) override;
 };
-
-auto qFileLoad (const QString, QByteArray &) -> bool;
-auto qFileStore(const QString, QByteArray &) -> bool;
 
 #endif // MAIN_H

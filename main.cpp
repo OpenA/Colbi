@@ -1,11 +1,17 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QStandardPaths>
+#include <QMimeDatabase>
+#include <QDateTime>
+#include <QFileInfo>
 #include <main.h>
 
-namespace GlobalOpts {
-	QString pattern = "__optim__";
-}
+QMap<QString, QString> STR_Param;
+QMap<QString, bool>   BOOL_Param;
+QMap<QString, int>     INT_Param;
+
+const QDir SAVE_ORI_DIR = QDir( QStandardPaths::writableLocation(QStandardPaths::TempLocation) +"/Colbi~saveOriginals" );
+const bool SYS_CASE_INS = SAVE_ORI_DIR.exists(QDir::homePath().toUpper());
 
 auto ImgWrk::work() -> void {
 	is_busy = true;
@@ -15,24 +21,56 @@ auto ImgWrk::work() -> void {
 	is_busy = false;
 }
 auto ImgWrk::start () -> void { m_future = QtConcurrent::run(this, &ImgWrk::work); }
-auto ImgWrk::pause () -> void { m_future.togglePaused(); }
-auto ImgWrk::stop  () -> void { m_future.cancel();       }
-auto ImgWrk::restart (QString out, qint64 size) -> void {
-	m_outFile = out;
-	m_rawSize = size;
-	m_optSize = 0;
-	stop(), start();
+auto ImgWrk::stop  () -> void { m_future.cancel(); }
+auto ImgWrk::pause () -> void {
+	if(!m_future.isFinished() && !m_future.isCanceled()) {
+		const bool paused = !m_future.isPaused();
+		QCoreApplication::postEvent(m_parent,
+			new TaskEvent(m_index, paused ? S_Paused : m_future.isStarted() ? S_Working : S_Idle));
+		m_future.setPaused(paused);
+	}
+}
+auto PngWrk::reload(size_t size) -> void {
+	m_rawSize = size, m_optSize = 0;
+	m_quality = INT_Param["PNG/minQuality"];
+}
+auto JpgWrk::reload(size_t size) -> void {
+	m_rawSize     = size, m_optSize = 0;
+	m_quality     =  INT_Param["JPEG/maxQuality"];
+	m_progressive = BOOL_Param["JPEG/progressive"];
+	m_arithmetic  = BOOL_Param["JPEG/arithmetic" ];
 }
 
-Colbi::Colbi(QObject *parent) : QObject(parent) {
-	//QString cfg = QStandardPaths::locate(QStandardPaths::ConfigLocation, "Colbi_formats.ini", QStandardPaths::LocateFile);
-	//m_settings = new QSettings(cfg, QSettings::IniFormat);
+Colbi::Colbi(QObject *parent) : QObject(parent)
+{
+	m_settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Colbi", "settings");
+
+	for (QString key : STR_Param.keys()) {
+		if (m_settings->contains(key))
+			STR_Param[key] = m_settings->value(key).toString();
+	}
+	for (QString key : BOOL_Param.keys()) {
+		if (m_settings->contains(key))
+		   BOOL_Param[key] = m_settings->value(key).toBool();
+	}
+	for (QString key : INT_Param.keys()) {
+		if (m_settings->contains(key))
+			INT_Param[key] = m_settings->value(key).toInt();
+	}
 }
 Colbi::~Colbi() {
 	/*for (TWrk *wk : taskList) {
 		wk->stop();
 	}*/
 }
+
+auto Colbi::getParamStr  ( const QString key ) -> QString { return  STR_Param[key]; }
+auto Colbi::getParamBool ( const QString key ) -> bool    { return BOOL_Param[key]; }
+auto Colbi::getParamInt  ( const QString key ) -> int     { return  INT_Param[key]; }
+
+void Colbi::setOptionStr ( const QString key, QString str ) { m_settings->setValue(key,  (STR_Param[key] = str));    }
+void Colbi::setOptionBool( const QString key, bool flag   ) { m_settings->setValue(key, (BOOL_Param[key] = flag));   }
+void Colbi::setOptionInt ( const QString key, int number  ) { m_settings->setValue(key,  (INT_Param[key] = number)); }
 
 auto Colbi::event(QEvent *event) -> bool {
 
@@ -50,7 +88,7 @@ auto Colbi::event(QEvent *event) -> bool {
 	return true;
 }
 
-auto Colbi::taskWorker( QString name, QString absfile, QString outfile, qint64 size) -> void {
+auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 
 	const QMimeDatabase db;
 	const QMimeType mime = db.mimeTypeForFile( absfile );
@@ -58,14 +96,19 @@ auto Colbi::taskWorker( QString name, QString absfile, QString outfile, qint64 s
 
 	unsigned char status = S_Idle;
 
-	if (mime.inherits("image/jpeg")) {
-		taskList.append( new JpgWrk( this, num, size, absfile, outfile) );
-	} else if (mime.inherits("image/png")) {
-		taskList.append( new PngWrk( this, num, size, absfile, outfile) );
-	} else if (mime.inherits("image/gif")) {
-		taskList.append( new PngWrk( this, num, size, absfile, outfile) );
-	} else if (mime.inherits("image/bmp")) {
-		taskList.append( new PngWrk( this, num, size, absfile, outfile) );
+	if (size > 0xFFFFFFFF) {
+		taskList.append( new TWrk );
+		status = S_Error;
+	} else if (mime.inherits("image/jpeg")) {
+		taskList.append(
+			new JpgWrk( this, num, size, INT_Param["JPEG/maxQuality"], BOOL_Param["JPEG/progressive"], BOOL_Param["JPEG/arithmetic" ] )
+		);
+	} else if (mime.inherits("image/png") || mime.inherits("image/bmp")) {
+		taskList.append(
+			new PngWrk( this, num, size, INT_Param["PNG/minQuality"], BOOL_Param["PNG/8bitColors"])
+		);
+//	} else if (mime.inherits("image/gif")) {
+//		taskList.append( new PngWrk( this, num, size, INT_Param["GIF/minQuality"]) );
 	} else {
 		taskList.append( new TWrk );
 		status = S_Error;
@@ -81,7 +124,8 @@ auto Colbi::addTask  ( const QString path) -> void {
 
 	const QFileInfo fi(path);
 
-	if (!fi.exists() && !fi.permission(QFile::WriteUser | QFile::ReadGroup))
+	if (!fi.exists() || !fi.permission(QFile::WriteUser | QFile::ReadGroup) ||
+		 fi.absolutePath().startsWith(SAVE_ORI_DIR.absolutePath(), SYS_CASE_INS ? Qt::CaseInsensitive : Qt::CaseSensitive))
 		return;
 
 	if (fi.isSymLink()) {
@@ -95,23 +139,24 @@ auto Colbi::addTask  ( const QString path) -> void {
 	} else {
 		QString absfile = fi.absoluteFilePath();
 		qint16  idx     = fileList.indexOf( absfile );
-
-		QString outfile = fi.absolutePath() +"/"+ fi.completeBaseName() + GlobalOpts::pattern +"."+ fi.suffix();
-		qint64  size    = fi.size();
+		qint64 size     = fi.size();
 
 		if (idx >= 0) {
 			if (taskList[idx]->is_busy != true) {
-				taskList[idx]->restart(outfile, size);
+				taskList[idx]->reload(size);
+				emit taskProgress((unsigned short)idx, 0, (long long)size);
+				emit statusUpdate((unsigned short)idx, S_Idle);
+				taskList[idx]->start();
 			};
 		} else {
-			taskWorker(fi.fileName(), absfile, outfile, size );
+			taskWorker(fi.fileName(), absfile, size );
 		}
 	}
 }
 
-auto qFileLoad(const QString path, QByteArray &blob) -> bool
+auto Colbi::qFileLoad(const quint16 idx, QByteArray &blob) -> bool
 {
-	QFile file(path);
+	QFile file(fileList[idx]);
 	 bool ok;
 	if (( ok = file.open(QIODevice::ReadOnly))) {
 		blob = file.readAll();
@@ -120,9 +165,25 @@ auto qFileLoad(const QString path, QByteArray &blob) -> bool
 	return ok;
 }
 
-auto qFileStore(const QString path, QByteArray &blob) -> bool
+auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
 {
-	QFile file(path);
+	const QFileInfo fi(fileList[idx]);
+	const QString src_path = fi.absolutePath() +"/";
+
+	QString name = fi.completeBaseName();
+	QString ext  = fi.suffix();
+
+	bool mv_tmp = BOOL_Param["General/moveToTemp"];
+	QString pat = STR_Param["General/namePattern"];
+
+	if (mv_tmp) {
+		if (!SAVE_ORI_DIR.exists())
+			 SAVE_ORI_DIR.mkpath(".");
+		QString lastmod = fi.lastModified().toLocalTime().toString("d.MM.yyyy hh:mm");
+		QFile::rename(src_path + name +"."+ ext, SAVE_ORI_DIR.absolutePath() +"/"+ name +" ("+ lastmod +")."+ ext);
+	}
+
+	QFile file(src_path + name + pat +"."+ ext);
 	 bool ok;
 	if (( ok = file.open(QIODevice::WriteOnly))) {
 		file.write(blob);
@@ -133,6 +194,20 @@ auto qFileStore(const QString path, QByteArray &blob) -> bool
 
 int main(int argc, char *argv[])
 {
+	STR_Param["General/namePattern"] = "";
+   BOOL_Param["General/moveToTemp" ] = true;
+	INT_Param["General/colorTheme" ] = 0;
+
+   BOOL_Param["JPEG/progressive"] = true;
+   BOOL_Param["JPEG/arithmetic" ] = false;
+	INT_Param["JPEG/maxQuality" ] = -90;
+
+   BOOL_Param["PNG/8bitColors"] = true;
+	INT_Param["PNG/minQuality"] = 100;
+
+   BOOL_Param["GIF/convToWebP"] = false;
+	INT_Param["GIF/minQuality"] = 100;
+
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
 	QGuiApplication app(argc, argv);
