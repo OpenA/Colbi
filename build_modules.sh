@@ -1,32 +1,49 @@
-#!/bin/sh
+#!/bin/bash
 
 LIBDIR="$PWD/lib"
-STABLE="$1"
+libs=('gifsicle' 'libimagequant' 'mozjpeg' 'zopfli')
 
-git_reset_stable() {
-	git -C 'lib/libimagequant' reset --hard cfda870
-	git -C 'lib/mozjpeg'       reset --hard 8fb32c0
-	git -C 'lib/zopfli'        reset --hard 7113f4e
+function build_gifsicle() {
+	cd "$LIBDIR/gifsicle"
+	autoreconf -i
+	./configure --disable-gifview --disable-gifdiff --disable-threads
+	make
+    ar -rcs libgifsicle.a src/fmalloc.o src/gifread.o src/gifwrite.o src/giffunc.o src/gifunopt.o src/merge.o src/optimize.o src/quantize.o src/xform.o
+}
+function build_libimagequant() {
+	cd "$LIBDIR/libimagequant"
+	./configure --enable-sse
+	make static
+}
+function build_mozjpeg() {
+	cd "$LIBDIR/mozjpeg"
+	cmake . -DENABLE_SHARED=0 -DENABLE_STATIC=1 -DWITH_TURBOJPEG=0 -DPNG_SUPPORTED=0 -DWITH_JPEG8=1 -DWITH_ARITH_ENC=1 -DWITH_ARITH_DEC=1
+	make
+}
+function build_zopfli() {
+	cd "$LIBDIR/zopfli"
+	sed -i 's/libzopflipng.a: $(LODEPNG_OBJ) $(ZOPFLIPNGLIB_OBJ)/libzopflipng.a: $(LODEPNG_OBJ) $(ZOPFLILIB_OBJ) $(ZOPFLIPNGLIB_OBJ)/' Makefile
+	make libzopflipng.a
 }
 
-git submodule update --init --recursive
+case $1 in
+	'')
+	git submodule update --init --recursive
 
-if [[ $STABLE == 'stable' ]]
-	then git_reset_stable
-fi
+	for libname in "${libs[@]}"; do
+		echo `build_$libname`
+	done
+	;;
+	'clean')
+	git submodule foreach git reset --hard
+	git submodule foreach git clean -f -d
 
-# build imagequanl library
-cd "$LIBDIR/libimagequant"
-./configure --enable-sse
-make shared
-
-# build mozjpeg library
-cd "$LIBDIR/mozjpeg"
-cmake . -DENABLE_STATIC=0 -DWITH_TURBOJPEG=0 -DPNG_SUPPORTED=0 -DWITH_JPEG8=1 -DWITH_ARITH_ENC=1 -DWITH_ARITH_DEC=1
-make
-
-# build zopfli library
-cd "$LIBDIR/zopfli"
-make libzopflipng
-ln -s libzopflipng.so.* libzopflipng.so.1
-ln -s libzopflipng.so.1 libzopflipng.so
+	for libname in "${libs[@]}"; do
+		cd "$LIBDIR/$libname"
+		make clean
+	done
+	;;
+	*)
+		echo `build_$1`
+	;;
+esac

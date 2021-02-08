@@ -127,6 +127,20 @@ public:
 	void stop () override;
 };
 
+/* GIF Worker Extends */
+class GifWrk : public ImgWrk
+{
+protected:
+	bool m_toWebP;
+	bool optim() override;
+public:
+	explicit GifWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool c) : ImgWrk(p,n,s,q)
+	{
+		m_toWebP = c;
+	}
+	void reload(size_t) override;
+};
+
 /* PNG Worker Extends */
 class PngWrk : public ImgWrk
 {

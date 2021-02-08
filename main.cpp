@@ -30,6 +30,11 @@ auto ImgWrk::pause () -> void {
 		m_future.setPaused(paused);
 	}
 }
+auto GifWrk::reload(size_t size) -> void {
+	m_rawSize = size, m_optSize = 0;
+	m_quality =  INT_Param["GIF/minQuality"];
+	m_toWebP  = BOOL_Param["GIF/convToWebP"];
+}
 auto PngWrk::reload(size_t size) -> void {
 	m_rawSize = size, m_optSize = 0;
 	m_quality = INT_Param["PNG/minQuality"];
@@ -107,8 +112,10 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 		taskList.append(
 			new PngWrk( this, num, size, INT_Param["PNG/minQuality"], BOOL_Param["PNG/8bitColors"])
 		);
-//	} else if (mime.inherits("image/gif")) {
-//		taskList.append( new PngWrk( this, num, size, INT_Param["GIF/minQuality"]) );
+	} else if (mime.inherits("image/gif")) {
+		taskList.append(
+			new GifWrk( this, num, size, INT_Param["GIF/minQuality"], BOOL_Param["GIF/convToWebP"])
+		);
 	} else {
 		taskList.append( new TWrk );
 		status = S_Error;

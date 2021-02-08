@@ -27,6 +27,7 @@ HEADERS += \
 
 SOURCES += \
 		main.cpp \
+		GifWorker.cpp \
 		JpgWorker.cpp \
 		PngWorker.cpp
 
