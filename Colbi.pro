@@ -13,13 +13,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-LIBS += -L$$PWD/lib/libimagequant -limagequant \
-		-L$$PWD/lib/zopfli -lzopflipng \
-		-L$$PWD/lib/mozjpeg -ljpeg
+LIBS += -L$$PWD/lib/_Dist_/imagequant -limagequant \
+		-L$$PWD/lib/_Dist_/zopfli -lzopflipng \
+		-L$$PWD/lib/_Dist_/mozjpeg -ljpeg
 
 INCLUDEPATH += \
 		lib/libimagequant \
 		lib/zopfli/src/zopflipng \
+		lib/_Dist_/mozjpeg \
 		lib/mozjpeg
 
 HEADERS += \
