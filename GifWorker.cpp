@@ -1,5 +1,5 @@
 #include <main.h>
-//#include <gifsi.h>
+#include <gifsi.h>
 
 auto GifWrk::optim() -> bool
 {
@@ -8,7 +8,7 @@ auto GifWrk::optim() -> bool
 	bool is_ok = m_parent->qFileLoad(m_index, gif_src);
 	if ( is_ok ) {
 		// create memory object
-		/*Gif_CompressInfo gCInf;
+		Gif_CompressInfo gCInf;
 		gCInf.flags = 0;
 		gCInf.loss  = 60;
 		// decode gif data from memory
@@ -30,7 +30,7 @@ auto GifWrk::optim() -> bool
 				is_ok = m_parent->qFileStore(m_index, cgif_out, GIF);
 			}
 		}
-		Gif_DeleteStream(gStrm);*/
+		Gif_DeleteStream(gStrm);
 	}
 	return is_ok;
 }

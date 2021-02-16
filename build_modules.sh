@@ -2,14 +2,14 @@
 
 LIBDIR="$PWD/lib"
 DIST="_Dist_"
-libs=('gifsicle' 'libimagequant' 'mozjpeg' 'zopfli')
+libs=('libgifsi' 'libimagequant' 'mozjpeg' 'zopfli')
 
-function build_gifsicle() {
-	cd "$LIBDIR/gifsicle"
-	autoreconf -i
-	./configure --disable-gifview --disable-gifdiff --disable-threads
+function build_libgifsi() {
+	mkdir -p "$LIBDIR/$DIST/libgifsi"
+	cd "$LIBDIR/$DIST/libgifsi"
+	cmake ../../libgifsi -DENABLE_SHARED=0 -DBUILD_GIFSICLE=0 -DWITH_SIMD=1
 	make
-    ar -rcs libgifsicle.a src/fmalloc.o src/gifread.o src/gifwrite.o src/giffunc.o src/gifunopt.o src/merge.o src/optimize.o src/quantize.o src/xform.o
+	echo $'\n ====== libgifsi build complete ======\n\n'
 }
 function build_libimagequant() {
 	mkdir -p "$LIBDIR/$DIST/imagequant"
