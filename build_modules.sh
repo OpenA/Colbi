@@ -3,6 +3,7 @@
 LIBDIR="$PWD/lib"
 DIST="_Dist_"
 libs=('libgifsi' 'libimagequant' 'mozjpeg' 'zopfli')
+module="$2"
 
 function build_libgifsi() {
 	mkdir -p "$LIBDIR/$DIST/libgifsi"
@@ -46,6 +47,17 @@ case $1 in
 	done
 	;;
 	'clean')
+
+	if [ -n $module ]; then
+		cd "$LIBDIR/$module"
+
+		git reset --hard
+		git clean -f -d
+
+		rm rf -R "$LIBDIR/$DIST/$module"
+		exit
+	fi
+
 	git submodule foreach git reset --hard
 	git submodule foreach git clean -f -d
 

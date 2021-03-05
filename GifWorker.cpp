@@ -12,12 +12,13 @@ auto GifWrk::optim() -> bool
 		gCInf.flags = 0;
 		gCInf.lossy = m_quality;
 		// decode gif data from memory
-		Gif_Stream *gStrm = Gif_ReadData(
+		Gif_Stream *gStrm = new Gif_Stream;
+		Gif_ReadData(gStrm,
 			reinterpret_cast<unsigned char *>(gif_src.data()),
 							(unsigned int   )(gif_src.size()));
 
 		// get frames count
-		quint32 gNumFrms = gStrm && !gStrm->errors ? Gif_ImageCount(gStrm) : 0;
+		quint32 gNumFrms = gStrm && !gStrm->errors.num ? Gif_ImageCount(gStrm) : 0;
 
 		if ((is_ok = gNumFrms)) {
 			unsigned long  out_size;
@@ -30,7 +31,7 @@ auto GifWrk::optim() -> bool
 				is_ok = m_parent->qFileStore(m_index, cgif_out, GIF);
 			}
 		}
-		Gif_DeleteStream(gStrm);
+		Gif_FreeStream(gStrm);
 	}
 	return is_ok;
 }
