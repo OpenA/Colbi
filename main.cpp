@@ -32,7 +32,7 @@ auto ImgWrk::pause () -> void {
 }
 auto GifWrk::reload(size_t size) -> void {
 	m_rawSize = size, m_optSize = 0;
-	m_quality =  INT_Param["GIF/minQuality"];
+	m_quality =  INT_Param["GIF/lossQuality"];
 	m_toWebP  = BOOL_Param["GIF/convToWebP"];
 }
 auto PngWrk::reload(size_t size) -> void {
@@ -114,7 +114,7 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 		);
 	} else if (mime.inherits("image/gif")) {
 		taskList.append(
-			new GifWrk( this, num, size, INT_Param["GIF/minQuality"], BOOL_Param["GIF/convToWebP"])
+			new GifWrk( this, num, size, INT_Param["GIF/lossQuality"], BOOL_Param["GIF/convToWebP"])
 		);
 	} else {
 		taskList.append( new TWrk );
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 	INT_Param["PNG/minQuality"] = 100;
 
    BOOL_Param["GIF/convToWebP"] = false;
-	INT_Param["GIF/minQuality"] = 100;
+	INT_Param["GIF/lossQuality"] = 20;
 
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 

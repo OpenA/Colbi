@@ -473,10 +473,46 @@ ApplicationWindow {
 			Item {
 				id: setGIF
 				visible: false
-				CheckBox {
-					x: 51
-					y: 34
-					text: qsTr("Gif")
+
+				property int qloss: _Colbi.getParamInt("GIF/lossQuality")
+
+				Row {
+					y             : 140
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Text {
+						height : 32
+						text   : qsTr("Lossiness:")
+						font   { pixelSize: 16; italic: true }
+						verticalAlignment : Text.AlignVCenter
+					}
+				}
+				Row {
+					y             : 175
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Slider {
+						id             : gif_loss_quality
+						height         : 32
+						from           : 0
+						to             : 100
+						stepSize       : 1
+						snapMode       : Slider.SnapAlways
+						value          : setGIF.qloss
+						onValueChanged : {
+							if (setGIF.qloss !== value)
+								_Colbi.setOptionInt("PNG/lossQuality", (setGIF.qloss = value));
+						}
+					}
+					Text {
+						height : 32
+						color  : "gray"
+						text   : gif_loss_quality.value +"%"
+						font   { pixelSize: 18; italic: true }
+						verticalAlignment : Text.AlignVCenter
+					}
 				}
 			}
 			Item {

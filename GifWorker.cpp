@@ -10,7 +10,7 @@ auto GifWrk::optim() -> bool
 		// create memory object
 		Gif_CompressInfo gCInf;
 		gCInf.flags = 0;
-		gCInf.loss  = 60;
+		gCInf.lossy = m_quality;
 		// decode gif data from memory
 		Gif_Stream *gStrm = Gif_ReadData(
 			reinterpret_cast<unsigned char *>(gif_src.data()),
@@ -22,7 +22,7 @@ auto GifWrk::optim() -> bool
 		if ((is_ok = gNumFrms)) {
 			unsigned long  out_size;
 			unsigned char *out_data = nullptr;
-			Gif_FullOptimizeFragments(gStrm, 0xFFFF, 1, &gCInf);
+			Gif_FullOptimizeFragments(gStrm, 3, 1, &gCInf);
 			out_size = Gif_FullWriteData(gStrm, out_data, &gCInf);
 
 			if (is_ok && m_rawSize > (m_optSize = out_size)) {
