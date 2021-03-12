@@ -13,6 +13,7 @@ auto GifWrk::optim() -> bool
 		gCInf.lossy = m_quality;
 		// decode gif data from memory
 		Gif_Stream *gStrm = new Gif_Stream;
+		Gif_InitStream(gStrm, nullptr);
 		Gif_ReadData(gStrm,
 			reinterpret_cast<unsigned char *>(gif_src.data()),
 							(unsigned int   )(gif_src.size()));
