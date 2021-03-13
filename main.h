@@ -95,10 +95,12 @@ public slots:
 	QString getParamStr ( const QString );
 	bool    getParamBool( const QString );
 	int     getParamInt ( const QString );
+	float   getParamReal( const QString );
 
 	void setOptionStr ( const QString, QString );
 	void setOptionBool( const QString, bool    );
 	void setOptionInt ( const QString, int     );
+	void setOptionReal( const QString, float   );
 };
 
 /* Image Worker Base Class */
@@ -131,12 +133,14 @@ public:
 class GifWrk : public ImgWrk
 {
 protected:
-	bool m_toWebP;
+	float m_lossy;
+	qint8 m_dither;
+	bool  m_recolor;
 	bool optim() override;
 public:
-	explicit GifWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool c) : ImgWrk(p,n,s,q)
+	explicit GifWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool r, qint8 d, float l) : ImgWrk(p,n,s,q)
 	{
-		m_toWebP = c;
+		m_recolor = r, m_dither = d, m_lossy = l;
 	}
 	void reload(size_t) override;
 };

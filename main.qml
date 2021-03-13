@@ -16,7 +16,8 @@ ApplicationWindow {
 		"darkcyan",
 		"#00C963",
 		"orange",
-		"#cd0000"
+		"#cd0000",
+		"#9e9e9e"
 	];
 	property var bgColors : [
 		"floralwhite",
@@ -249,7 +250,7 @@ ApplicationWindow {
 
 			Item {
 				id           : setGeneral
-				visible      : true
+				visible      : false
 				anchors.fill : parent
 
 				property int theme: _Colbi.getParamInt("General/colorTheme")
@@ -260,7 +261,7 @@ ApplicationWindow {
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					CheckBox {
-					//	id        : g_moveToTemp
+						//	id        : g_moveToTemp
 						text      : qsTr("Move originals to temporary dir")
 						font      { pixelSize: 18 }
 						checked   : _Colbi.getParamBool("General/moveToTemp");
@@ -300,7 +301,7 @@ ApplicationWindow {
 						verticalAlignment : Text.AlignVCenter
 					}
 					TextField {
-					//	id               : g_namePattern
+						//	id               : g_namePattern
 						width            : 140
 						height           : 32
 						text             : _Colbi.getParamStr("General/namePattern");
@@ -331,7 +332,7 @@ ApplicationWindow {
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					CheckBox {
-					//	id        : jpg_Progressive
+						//	id        : jpg_Progressive
 						text      : qsTr("Progressive")
 						font      { pixelSize: 18 }
 						checked   : _Colbi.getParamBool("JPEG/progressive");
@@ -365,7 +366,7 @@ ApplicationWindow {
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					RadioButton {
-					//	id        : jpg_lossless
+						//	id        : jpg_lossless
 						height    : 32
 						text      : qsTr("Lossless")
 						checked   : setJPEG.qmax < 0
@@ -375,7 +376,7 @@ ApplicationWindow {
 						}
 					}
 					RadioButton {
-					//	id        : jpg_lossy
+						//	id        : jpg_lossy
 						height    : 32
 						text      : qsTr("Lossy")
 						checked   : setJPEG.qmax > 0
@@ -424,7 +425,7 @@ ApplicationWindow {
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					CheckBox {
-					//	id        : png_8bitColors
+						//	id        : png_8bitColors
 						text      : qsTr("Convert all to 8bit pallete")
 						font      { pixelSize: 18 }
 						checked   : _Colbi.getParamBool("PNG/8bitColors");
@@ -472,10 +473,52 @@ ApplicationWindow {
 			}
 			Item {
 				id: setGIF
-				visible: false
+				visible: true
 
-				property int qloss: _Colbi.getParamInt("GIF/lossQuality")
+				property double loss: _Colbi.getParamReal("GIF/lossQuality")
+				property bool  recol: _Colbi.getParamBool("GIF/reColor")
+				property int   clmax: _Colbi.getParamInt("GIF/maxColors")
+				property int  dither: _Colbi.getParamInt("GIF/ditherPlan")
 
+				Row {
+					y             : 20
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					CheckBox {
+					//	id        : jpg_Progressive
+						text      : qsTr("Color Dithering")
+						font      { pixelSize: 18 }
+						checked   : setGIF.recol
+						onClicked : {
+							_Colbi.setOptionBool("GIF/reColor", (setGIF.recol = checked));
+						}
+					}
+				}
+				Row {
+					y             : 75
+					height        : 40
+					anchors.right : parent.right
+					anchors.left  : parent.left
+					Text {
+						verticalAlignment : Text.AlignVCenter
+						font.pixelSize    : 18
+						height            : 32
+						text              : qsTr("Dithering:  ")
+					}
+					ComboBox {
+						currentIndex          : setGIF.dither
+						height                : 32
+						model                 : [
+							"Noise", "3x3 Quads", "4x4 Quads", "8x8 Quads", "45 Deg. Lines", "64x64 Quads",
+							"Square Halftone", "Triangle Halftone", "8x8 Halftone"
+						]
+						onCurrentIndexChanged : {
+							if (setGIF.dither !== currentIndex)
+								_Colbi.setOptionInt("GIF/ditherPlan", (setGIF.dither = currentIndex));
+						}
+					}
+				}
 				Row {
 					y             : 140
 					height        : 40
@@ -483,7 +526,7 @@ ApplicationWindow {
 					anchors.left  : parent.left
 					Text {
 						height : 32
-						text   : qsTr("Lossiness:")
+						text   : qsTr("Max Colors to Use:")
 						font   { pixelSize: 16; italic: true }
 						verticalAlignment : Text.AlignVCenter
 					}
@@ -494,24 +537,49 @@ ApplicationWindow {
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					Slider {
-						id             : gif_loss_quality
+						id             : gif_max_colors
 						height         : 32
-						from           : 0
-						to             : 100
+						from           : 1
+						to             : 255
 						stepSize       : 1
 						snapMode       : Slider.SnapAlways
-						value          : setGIF.qloss
+						enabled        : setGIF.recol
+						value          : setGIF.clmax
 						onValueChanged : {
-							if (setGIF.qloss !== value)
-								_Colbi.setOptionInt("PNG/lossQuality", (setGIF.qloss = value));
+							if (setGIF.clmax !== value)
+								_Colbi.setOptionInt("GIF/maxColors", (setGIF.clmax = value));
 						}
 					}
 					Text {
 						height : 32
 						color  : "gray"
-						text   : gif_loss_quality.value +"%"
+						text   : (gif_max_colors.value + 1).toString()
 						font   { pixelSize: 18; italic: true }
 						verticalAlignment : Text.AlignVCenter
+					}
+				}
+				Dial {
+					id             : gif_loss_quality
+					x              : 256
+					y              : 42
+					width          : 130
+					height         : 130
+					from           : 655.35
+					to             : 0
+					stepSize       : 0.05
+					snapMode       : Dial.SnapOnRelease
+					value          : setGIF.loss
+					onValueChanged : {
+						if (setGIF.loss !== value)
+							_Colbi.setOptionReal("GIF/lossQuality", (setGIF.loss = value));
+					}
+					Text {
+						color : "gray"
+						text  : "lossiness\n"+ (gif_loss_quality.value / 655.35 * 100).toFixed(1) +"%"
+						font  { pixelSize   : 18; italic: true }
+						horizontalAlignment : Text.AlignHCenter
+						verticalAlignment   : Text.AlignVCenter
+						anchors.centerIn    : parent
 					}
 				}
 			}

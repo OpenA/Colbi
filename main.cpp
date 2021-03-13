@@ -9,6 +9,7 @@
 QMap<QString, QString> STR_Param;
 QMap<QString, bool>   BOOL_Param;
 QMap<QString, int>     INT_Param;
+QMap<QString, float>    FP_Param;
 
 const QDir SAVE_ORI_DIR = QDir( QStandardPaths::writableLocation(QStandardPaths::TempLocation) +"/Colbi~saveOriginals" );
 const bool SYS_CASE_INS = SAVE_ORI_DIR.exists(QDir::homePath().toUpper());
@@ -32,8 +33,10 @@ auto ImgWrk::pause () -> void {
 }
 auto GifWrk::reload(size_t size) -> void {
 	m_rawSize = size, m_optSize = 0;
-	m_quality =  INT_Param["GIF/lossQuality"];
-	m_toWebP  = BOOL_Param["GIF/convToWebP"];
+	m_recolor = BOOL_Param["GIF/reColor"];
+	m_quality =  INT_Param["GIF/maxColors"];
+	m_dither  =  INT_Param["GIF/ditherPlan"];
+	m_lossy   =   FP_Param["GIF/lossQuality"];
 }
 auto PngWrk::reload(size_t size) -> void {
 	m_rawSize = size, m_optSize = 0;
@@ -62,6 +65,10 @@ Colbi::Colbi(QObject *parent) : QObject(parent)
 		if (m_settings->contains(key))
 			INT_Param[key] = m_settings->value(key).toInt();
 	}
+	for (QString key : FP_Param.keys()) {
+		if (m_settings->contains(key))
+			FP_Param[key] = m_settings->value(key).toFloat();
+	}
 }
 Colbi::~Colbi() {
 	/*for (TWrk *wk : taskList) {
@@ -72,10 +79,12 @@ Colbi::~Colbi() {
 auto Colbi::getParamStr  ( const QString key ) -> QString { return  STR_Param[key]; }
 auto Colbi::getParamBool ( const QString key ) -> bool    { return BOOL_Param[key]; }
 auto Colbi::getParamInt  ( const QString key ) -> int     { return  INT_Param[key]; }
+auto Colbi::getParamReal ( const QString key ) -> float   { return   FP_Param[key]; }
 
 void Colbi::setOptionStr ( const QString key, QString str ) { m_settings->setValue(key,  (STR_Param[key] = str));    }
 void Colbi::setOptionBool( const QString key, bool flag   ) { m_settings->setValue(key, (BOOL_Param[key] = flag));   }
 void Colbi::setOptionInt ( const QString key, int number  ) { m_settings->setValue(key,  (INT_Param[key] = number)); }
+void Colbi::setOptionReal( const QString key, float real  ) { m_settings->setValue(key,   (FP_Param[key] = real));   }
 
 auto Colbi::event(QEvent *event) -> bool {
 
@@ -101,7 +110,7 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 
 	unsigned char status = S_Idle;
 
-	if (size > 0xFFFFFFFF) {
+	if (size > 0xFFFFFFFFU) {
 		taskList.append( new TWrk );
 		status = S_Error;
 	} else if (mime.inherits("image/jpeg")) {
@@ -114,11 +123,11 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 		);
 	} else if (mime.inherits("image/gif")) {
 		taskList.append(
-			new GifWrk( this, num, size, INT_Param["GIF/lossQuality"], BOOL_Param["GIF/convToWebP"])
+			new GifWrk( this, num, size, INT_Param["GIF/maxColors"], BOOL_Param["GIF/reColor"], INT_Param["GIF/ditherPlan"], FP_Param["GIF/lossQuality"])
 		);
 	} else {
 		taskList.append( new TWrk );
-		status = S_Error;
+		status = S_Unknown;
 	}
 	fileList.append( absfile );
 	emit taskAdded((unsigned short)num, status, (long long)size, name);
@@ -212,8 +221,10 @@ int main(int argc, char *argv[])
    BOOL_Param["PNG/8bitColors"] = true;
 	INT_Param["PNG/minQuality"] = 100;
 
-   BOOL_Param["GIF/convToWebP"] = false;
-	INT_Param["GIF/lossQuality"] = 20;
+   BOOL_Param["GIF/reColor"] = false;
+	INT_Param["GIF/maxColors"] = 255;
+	INT_Param["GIF/ditherPlan"] = 1;
+	 FP_Param["GIF/lossQuality"] = 0;
 
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
