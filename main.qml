@@ -457,12 +457,12 @@ ApplicationWindow {
 					height        : 40
 					anchors.right : parent.right
 					anchors.left  : parent.left
-					CheckBox {
-						id             : gif_recolor
-						text           : qsTr("Rebuild Colors")
-						font           { pixelSize: 18 }
-						checked        : _Colbi.getParamBool("GIF/reColor")
-						nextCheckState : _Colbi.setOptionBool("GIF/reColor", checked)
+					Switch {
+						id        : gif_recolor
+						text      : qsTr("Rebuild Colors")
+						font      { pixelSize: 18 }
+						checked   : _Colbi.getParamBool("GIF/reColor")
+						onClicked : _Colbi.setOptionBool("GIF/reColor", checked)
 					}
 				}
 				Row {
