@@ -2,6 +2,7 @@
 import QtQuick.Controls 2.14
 import QtQuick.Dialogs 1.0
 import git.OpenA.Colbi 1.0
+import "SvgWorker.js" as SvgWrk
 
 ApplicationWindow {
 	id      : window
@@ -23,6 +24,9 @@ ApplicationWindow {
 		"floralwhite",
 		"#feeddc"
 	];
+	property var jsSupport : [
+		"image/svg+xml"
+	];
 
 	function bitsMagnitude(size) {
 		return (size < 1e3 ?  size +" b" :
@@ -34,13 +38,20 @@ ApplicationWindow {
 	Colbi {
 		id: _Colbi
 		onTaskAdded      : {
+			var mime_index = jsSupport.indexOf(mime_type);
+			var stat_color = statColors[(
+				status === 5 && mime_index !== -1 ? 0 : status
+			)];
 			taskListModel.append({
 				bgColor  : bgColors[Math.round(num / 2 % 1)],
 				fileName : file_name.length > 53 ? "..."+ file_name.slice(-50) : file_name,
 				fileSize : bitsMagnitude(file_size),
-				statColor: statColors[status],
+				statColor: stat_color,
 				compress : ""
 			});
+			if (status === 5 && mime_index === 0) {
+				SvgWrk.work(num, file_size);
+			}
 			_Colbi.runTask(num);
 		}
 		onTaskProgress   : {

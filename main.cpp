@@ -130,7 +130,7 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 		status = S_Unknown;
 	}
 	fileList.append( absfile );
-	emit taskAdded((unsigned short)num, status, (long long)size, name);
+	emit taskAdded((unsigned short)num, status, (long long)size, name, mime.name());
 }
 
 auto Colbi::runTask  ( const quint16 idx ) -> void { taskList[idx]->start(); }
@@ -168,6 +168,20 @@ auto Colbi::addTask  ( const QString path) -> void {
 			taskWorker(fi.fileName(), absfile, size );
 		}
 	}
+}
+
+auto Colbi::readFileText(const quint16 idx) -> QString
+{
+	QByteArray buffer;
+	if (qFileLoad(idx, buffer))
+		return QString(buffer);
+	return QString("");
+}
+
+auto Colbi::saveFileText(const quint16 idx, const QString txt, IMG_T type) -> bool
+{
+	QByteArray buffer = txt.toUtf8();
+	return qFileStore(idx, buffer, type);
 }
 
 auto Colbi::qFileLoad(const quint16 idx, QByteArray &blob) -> bool

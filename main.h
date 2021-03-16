@@ -29,7 +29,7 @@ enum IMG_T {
 	JPG,
 	GIF,
 	BMP,
-	WebP
+	SVG
 };
 
 /* QEvent extends for tasks */
@@ -84,13 +84,16 @@ public:
 signals:
 	void taskProgress( unsigned short num, long long orig_size, long long new_size  );
 	void statusUpdate( unsigned short num, unsigned char status );
-	void taskAdded   ( unsigned short num, unsigned char status, long long file_size, QString file_name );
+	void taskAdded   ( unsigned short num, unsigned char status, long long file_size, QString file_name, QString mime_type );
 
 public slots:
 	void addTask  ( const QString );
 	void runTask  ( const quint16 );
 	void waitTask ( const quint16 );
 	void killTask ( const quint16 );
+
+	QString readFileText( const quint16 );
+	bool    saveFileText( const quint16, const QString, IMG_T );
 
 	QString getParamStr ( const QString );
 	bool    getParamBool( const QString );

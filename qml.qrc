@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>lib/_Dist_/svgo.js</file>
+        <file>SvgWorker.js</file>
     </qresource>
 </RCC>

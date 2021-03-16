@@ -2,9 +2,16 @@
 
 LIBDIR="$PWD/lib"
 DIST="_Dist_"
-libs=('libgifsi' 'libimagequant' 'mozjpeg' 'zopfli')
+libs=('libgifsi' 'libimagequant' 'mozjpeg' 'zopfli' 'svgo')
 module="$2"
 
+function build_svgo() {
+	mkdir -p "$LIBDIR/$DIST"
+	cd "$LIBDIR/svgo"
+	npm install && npm install babelify @babel/core @babel/cli @babel/preset-env @babel/plugin-transform-spread
+	browserify lib/svgo.js -t [ babelify --presets [ @babel/preset-env ] --plugins [ @babel/plugin-transform-spread ] ] | terser -c -m -f max_line_len=512 -o ../_Dist_/svgo.js
+	echo $'\n ====== svgo build complete ======\n\n'
+}
 function build_libgifsi() {
 	mkdir -p "$LIBDIR/$DIST/libgifsi"
 	cd "$LIBDIR/$DIST/libgifsi"
