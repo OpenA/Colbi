@@ -24,6 +24,8 @@ ApplicationWindow {
 		"#feeddc"
 	];
 
+	FontLoader { id: fonico; source: "lib/_Dist_/fonico.ttf" }
+
 	function bitsMagnitude(size) {
 		return (size < 1e3 ?  size +" b" :
 				size < 1e6 ? (size / 1e3).toFixed(1) +" Kb" :
@@ -71,14 +73,14 @@ ApplicationWindow {
 			x      : 8
 			y      : 8
 			id     : fileButton
-			color  : "#aaa"
+			color  : "#888"
 			width  : 30
 			height : 30
 			radius : 5
 
 			Text {
 				anchors.centerIn: parent
-				color : "#fefefe"
+				color : "whitesmoke"
 				text  : "+"
 				font  { family: "Arial"; pointSize: 12; bold: true }
 			}
@@ -86,8 +88,8 @@ ApplicationWindow {
 			MouseArea {
 				anchors.fill : parent
 				hoverEnabled : true
-				onEntered    : { fileButton.color = "#777" }
-				onExited     : { fileButton.color = "#aaa" }
+				onEntered    : { fileButton.color = "#444" }
+				onExited     : { fileButton.color = "#888" }
 				onClicked    : { fileDialog.open()         }
 			}
 		}
@@ -97,7 +99,7 @@ ApplicationWindow {
 		z      : 2
 		y      : 8
 		id     : settingsButton
-		color  : "#aaa"
+		color  : "#888"
 		width  : 30
 		height : 30
 		radius : 5
@@ -108,27 +110,27 @@ ApplicationWindow {
 
 		Text {
 			anchors.centerIn: parent
-			color : "#fefefe"
-			text  : "S"
-			font  { family: "Arial"; pointSize: 12; bold: true }
+			color : "whitesmoke"
+			text  : "G"
+			font  { family: fonico.name; pointSize: 12 }
 		}
 
 		MouseArea {
 			anchors.fill : parent
 			hoverEnabled : true
-			onEntered    : { parent.color = "#777" }
-			onExited     : { parent.color = "#aaa" }
+			onEntered    : { parent.color = "#444" }
+			onExited     : { parent.color = "#888" }
 			onClicked    : { sPannel.visible ^= 1  }
 		}
 	}
 
 	property int sPANNEL_BTN_WIDTH  : 100
-	property int sPANNEL_BTN_HEIGHT : 40
+	property int sPANNEL_BTN_HEIGHT : 42
 
 	Rectangle {
 		z       : 1
 		id      : sPannel
-		visible : false
+		visible : true
 		color   : "#fefefe"
 		anchors.fill: parent
 
@@ -145,17 +147,14 @@ ApplicationWindow {
 			}
 			Rectangle {
 				id: btnGeneral
-				x: 8
-				y: 4
+				y: 2
 				width: sPANNEL_BTN_WIDTH
 				height: sPANNEL_BTN_HEIGHT
 				color: "#fefefe"
-				radius : 4
-				border { color: "#ccc"; width: 2 }
 				Text {
 					text: qsTr("General")
 					anchors.centerIn: parent
-					font.pixelSize: 16
+					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
@@ -164,17 +163,15 @@ ApplicationWindow {
 			}
 			Rectangle {
 				id: btnJPEG
-				x      : 4
 				y      : 45
 				width  : sPANNEL_BTN_WIDTH
 				height : sPANNEL_BTN_HEIGHT
-				radius : 4
-				color  : "#dedede"
-				border { color: "#dedede"; width: 1 }
+				color  : "#444"
 				Text {
-					text: qsTr("JPEG")
+					text  : qsTr("JPEG")
+					color : "whitesmoke"
 					anchors.centerIn: parent
-					font.pixelSize: 16
+					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
@@ -183,17 +180,15 @@ ApplicationWindow {
 			}
 			Rectangle {
 				id: btnPNG
-				x: 4
-				y: 86
+				y: 88
 				width: sPANNEL_BTN_WIDTH
 				height: sPANNEL_BTN_HEIGHT
-				color: "#dedede"
-				radius : 4
-				border { color: "#dedede"; width: 1 }
+				color: "#444"
 				Text {
-					text: qsTr("PNG")
+					text  : qsTr("PNG")
+					color : "whitesmoke"
 					anchors.centerIn: parent
-					font.pixelSize: 16
+					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
@@ -202,17 +197,15 @@ ApplicationWindow {
 			}
 			Rectangle {
 				id: btnGIF
-				x: 4
-				y: 127
+				y: 131
 				width: sPANNEL_BTN_WIDTH
 				height: sPANNEL_BTN_HEIGHT
-				color: "#dedede"
-				radius : 4
-				border { color: "#dedede"; width: 1 }
+				color: "#444"
 				Text {
-					text: qsTr("GIF")
+					text  : qsTr("GIF")
+					color : "whitesmoke"
 					anchors.centerIn: parent
-					font.pixelSize: 16
+					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
@@ -220,18 +213,17 @@ ApplicationWindow {
 				}
 			}
 			Rectangle {
-				id: btnWebP
-				x: 4
-				y: 168
+				id: btnSVG
+				y: 166
 				width: sPANNEL_BTN_WIDTH
 				height: sPANNEL_BTN_HEIGHT
-				color: "#dedede"
-				radius : 4
-				border { color: "#dedede"; width: 1 }
+				color: "#444"
+				visible: false
 				Text {
-					text: qsTr("WebP")
+					text  : qsTr("SVG")
+					color : "whitesmoke"
 					anchors.centerIn: parent
-					font.pixelSize: 16
+					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
@@ -296,7 +288,7 @@ ApplicationWindow {
 						verticalAlignment : Text.AlignVCenter
 					}
 					TextField {
-					//	id               : g_namePattern
+						id               : g_name_pat
 						width            : 140
 						height           : 32
 						font { pixelSize : 18; italic: true }
@@ -304,6 +296,21 @@ ApplicationWindow {
 						placeholderText  : qsTr("__optimized__")
 						text             : _Colbi.getParamStr("General/namePattern")
 						onEditingFinished: _Colbi.setOptionStr("General/namePattern", text)
+						selectionColor   : statColors[3]
+						background       : Rectangle {
+							border.color : statColors[5]
+						}
+						MouseArea {
+							anchors.fill    : parent
+							cursorShape     : Qt.IBeamCursor
+							acceptedButtons : Qt.RightButton
+							hoverEnabled    : true
+							onClicked       : showCpyMenu(g_name_pat)
+							onPressAndHold  : {
+								if (mouse.source === Qt.MouseEventNotSynthesized)
+									showCpyMenu(g_name_pat);
+							}
+						}
 					}
 					Text {
 						height            : 32
@@ -492,18 +499,52 @@ ApplicationWindow {
 					height        : 40
 					anchors.right : parent.right
 					anchors.left  : parent.left
+					enabled       : gif_recolor.checked
 					Text {
 						height : 32
-						text   : qsTr("Max Colors to Use:")
+						text   : qsTr("Max Colors to Use:   ")
 						font   { pixelSize: 16; italic: true }
 						verticalAlignment : Text.AlignVCenter
 					}
 					Text {
-						height : 32
-						color  : "gray"
-						text   : "   "+ (gif_max_colors.value + 1)
-						font   { pixelSize: 18; italic: true }
-						verticalAlignment : Text.AlignVCenter
+						text: "< "; height  : 32; color: "black"
+						font   { pixelSize  : 16; bold :  true }
+						verticalAlignment   : Text.AlignVCenter
+						MouseArea {
+							anchors.fill    : parent
+							cursorShape     : Qt.PointingHandCursor
+							acceptedButtons : Qt.LeftButton
+							onClicked       : gif_max_colors.decrease()
+							onReleased      : { tim_h.running = false }
+							onPressAndHold  : { tim_h.interval &= ~1; tim_h.running = true }
+						}
+					}
+					Text {
+						text   : (gif_max_colors.value + 1).toString()
+						height : 32; width  : 32; color  : statColors[5 - gif_recolor.checked]
+						font   { pixelSize  : 18; italic :  true }
+						verticalAlignment   : Text.AlignVCenter
+						horizontalAlignment : Text.AlignHCenter
+					}
+					Text {
+						text: " >"; height  : 32; color : "black"
+						font   { pixelSize  : 16; bold  : true }
+						verticalAlignment   : Text.AlignVCenter
+						MouseArea {
+							anchors.fill    : parent
+							cursorShape     : Qt.PointingHandCursor
+							acceptedButtons : Qt.LeftButton
+							onClicked       : gif_max_colors.increase()
+							onReleased      : { tim_h.running = false }
+							onPressAndHold  : { tim_h.interval |= 1; tim_h.running = true }
+						}
+					}
+					Timer {
+						id          : tim_h
+						interval    : 100
+						running     : false
+						repeat      : true
+						onTriggered : gif_max_colors[`${interval & 1 ? 'in' : 'de'}crease`]()
 					}
 				}
 				Row {
@@ -546,35 +587,24 @@ ApplicationWindow {
 				}
 			}
 			Item {
-				id: setWebP
+				id: setSVG
 				visible: false
-				CheckBox {
-					x: 51
-					y: 34
-					text: qsTr("WebP")
-				}
 			}
 		}
 	}
 
 	function switchPannel(newIdx, oldIdx) {
-
-		if (oldIdx >= 0) {
-			const oldBtn = btnsGroup.children[oldIdx];
-			const oldSet = setsGroup.children[oldIdx];
-			oldBtn.x     = 4;
-			oldBtn.border.color = oldBtn.color = "#dedede";
-			oldBtn.border.width = 1;
-			oldSet.visible      = false;
-		}
+		if (newIdx === oldIdx)
+			return;
+		const oldBtn = btnsGroup.children[oldIdx];
+		const oldSet = setsGroup.children[oldIdx];
 		const newBtn = btnsGroup.children[newIdx];
 		const newSet = setsGroup.children[newIdx];
-		newBtn.color = "#fefefe";
-		newBtn.x     = 8;
-		newBtn.border.width = 2;
-		newBtn.border.color = "#ccc";
-		newSet.visible      = true;
-		sPannel.selectIdx   = newIdx;
+		oldBtn.children[0].color = "whitesmoke"; newBtn.color = "#fefefe";
+		newBtn.children[0].color = oldBtn.color = "#444";
+		oldSet.visible = false;
+		newSet.visible = true;
+		sPannel.selectIdx = newIdx;
 	}
 
 	ListModel {
@@ -664,21 +694,12 @@ ApplicationWindow {
 					}
 				}
 				MouseArea {
-					anchors.fill: parent
-					acceptedButtons: Qt.LeftButton | Qt.RightButton
-					onClicked: {
-						if (mouse.button === Qt.RightButton)
-							contextMenu.popup()
-					}
-					onPressAndHold: {
+					anchors.fill    : parent
+					acceptedButtons : Qt.RightButton
+					onClicked       : taskMenu.popup()
+					onPressAndHold  : {
 						if (mouse.source === Qt.MouseEventNotSynthesized)
-							contextMenu.popup()
-					}
-					Menu {
-						id: contextMenu
-						MenuItem { text: "Show Store" }
-						MenuItem { text: "Pause" ; onClicked: _Colbi.waitTask(index) }
-						MenuItem { text: "Cancel"; onClicked: _Colbi.killTask(index) }
+							taskMenu.popup()
 					}
 				}
 			}
@@ -721,5 +742,30 @@ ApplicationWindow {
 				decodeURI(urls[i].replace("file://",""))
 			);
 		}
+	}
+
+	Menu {
+		id: cpyMenu
+		property var hook: null;
+		MenuItem { text: "Cut"  ; onTriggered: { cpyMenu.hook.cut()  ; cpyMenu.hook = null } }
+		MenuItem { text: "Copy" ; onTriggered: { cpyMenu.hook.copy() ; cpyMenu.hook = null } }
+		MenuItem { text: "Paste"; onTriggered: { cpyMenu.hook.paste(); cpyMenu.hook = null } }
+	}
+	Menu {
+		id: taskMenu
+		property int num: -1;
+		MenuItem { text: "Show Store"; onTriggered: console.log("ok") }
+		MenuItem { text: "Pause"     ; onTriggered: _Colbi.waitTask(index) }
+		MenuItem { text: "Cancel"    ; onTriggered: _Colbi.killTask(index) }
+	}
+
+	function showCpyMenu(txtArea) {
+		var start = txtArea.selectionStart,
+		      end = txtArea.selectionEnd,
+		      pos = txtArea.cursorPosition;
+		cpyMenu.hook = txtArea;
+		cpyMenu.popup();
+		txtArea.cursorPosition = pos;
+		txtArea.select(start,end);
 	}
 }

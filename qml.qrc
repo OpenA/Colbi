@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>lib/_Dist_/fonico.ttf</file>
     </qresource>
 </RCC>
