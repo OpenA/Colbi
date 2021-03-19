@@ -2,6 +2,7 @@
 import QtQuick.Controls 2.14
 import QtQuick.Dialogs 1.0
 import git.OpenA.Colbi 1.0
+import "themes.js" as Themes
 
 ApplicationWindow {
 	id      : window
@@ -9,20 +10,11 @@ ApplicationWindow {
 	width   : 640; minimumWidth  : 640
 	height  : 480; minimumHeight : 480
 	visible : true
-	color   : "floralwhite"
 
-	property var statColors : [
-		"transparent",
-		"darkcyan",
-		"#00C963",
-		"orange",
-		"#cd0000",
-		"#9e9e9e"
-	];
-	property var bgColors : [
-		"floralwhite",
-		"#feeddc"
-	];
+	property int panelIdx : 0
+	property var glTheme  : null
+
+	color: glTheme.background[0]
 
 	FontLoader { id: fonico; source: "lib/_Dist_/fonico.ttf" }
 
@@ -37,10 +29,9 @@ ApplicationWindow {
 		id: _Colbi
 		onTaskAdded      : {
 			taskListModel.append({
-				bgColor  : bgColors[Math.round(num / 2 % 1)],
 				fileName : file_name.length > 53 ? "..."+ file_name.slice(-50) : file_name,
 				fileSize : bitsMagnitude(file_size),
-				statColor: statColors[status],
+				statID   : status,
 				compress : ""
 			});
 			_Colbi.runTask(num);
@@ -52,9 +43,8 @@ ApplicationWindow {
 			task.compress = compress.toFixed(1 + p).replace((p ? ".00" : ".0"), "") +"%";
 		}
 		onStatusUpdate   : {
-			var  task      = taskListModel.get(num);
-			task.statColor = statColors[status];
-			if (!status) {
+			var task = taskListModel.get(num);
+			if (!(task.statID = status)) {
 				task.compress = "";
 			}
 		}
@@ -63,24 +53,24 @@ ApplicationWindow {
 	Rectangle {
 		z       : 1
 		id      : pannel
-		color   : "#fefefe"
+		color   : glTheme.altLight
 		radius  : 5
 		height  : 46
-		border  { color: "#ddd"; width: 2 }
+		border  { color: "#55"+ glTheme.altDark.substr(1); width: 2 }
 		anchors { right: parent.right; left: parent.left }
 
 		Rectangle {
 			x      : 8
 			y      : 8
 			id     : fileButton
-			color  : "#888"
+			color  : glTheme.altDark
 			width  : 30
 			height : 30
 			radius : 5
 
 			Text {
 				anchors.centerIn: parent
-				color : "whitesmoke"
+				color : glTheme.textLight
 				text  : "+"
 				font  { family: "Arial"; pointSize: 12; bold: true }
 			}
@@ -88,9 +78,9 @@ ApplicationWindow {
 			MouseArea {
 				anchors.fill : parent
 				hoverEnabled : true
-				onEntered    : { fileButton.color = "#444" }
-				onExited     : { fileButton.color = "#888" }
-				onClicked    : { fileDialog.open()         }
+				onEntered    : { fileButton.color = glTheme.textDark }
+				onExited     : { fileButton.color = glTheme.altDark }
+				onClicked    : { fileDialog.open() }
 			}
 		}
 	}
@@ -99,7 +89,7 @@ ApplicationWindow {
 		z      : 2
 		y      : 8
 		id     : settingsButton
-		color  : "#888"
+		color  : glTheme.altDark
 		width  : 30
 		height : 30
 		radius : 5
@@ -110,7 +100,7 @@ ApplicationWindow {
 
 		Text {
 			anchors.centerIn: parent
-			color : "whitesmoke"
+			color : glTheme.textLight
 			text  : "G"
 			font  { family: fonico.name; pointSize: 12 }
 		}
@@ -118,39 +108,33 @@ ApplicationWindow {
 		MouseArea {
 			anchors.fill : parent
 			hoverEnabled : true
-			onEntered    : { parent.color = "#444" }
-			onExited     : { parent.color = "#888" }
-			onClicked    : { sPannel.visible ^= 1  }
+			onEntered    : { parent.color = glTheme.textDark }
+			onExited     : { parent.color = glTheme.altDark }
+			onClicked    : { sPannel.visible ^= 1 }
 		}
 	}
-
-	property int sPANNEL_BTN_WIDTH  : 100
-	property int sPANNEL_BTN_HEIGHT : 42
 
 	Rectangle {
 		z       : 1
 		id      : sPannel
 		visible : true
-		color   : "#fefefe"
+		color   : glTheme.altLight
 		anchors.fill: parent
 
-		property int selectIdx : 0
-
 		Item {
-			id: btnsGroup
-			clip : true
-			width: sPANNEL_BTN_WIDTH + 16
+			id      : btnsGroup
+			width   : Themes._PANNEL_BUTTON_W + 16
 			anchors {
 				top   : parent.top
 				left  : parent.left
 				bottom: parent.bottom
 			}
 			Rectangle {
-				id: btnGeneral
-				y: 2
-				width: sPANNEL_BTN_WIDTH
-				height: sPANNEL_BTN_HEIGHT
-				color: "#fefefe"
+				id     : btnGeneral
+				y      : 1
+				width  : Themes._PANNEL_BUTTON_W
+				height : Themes._PANNEL_BUTTON_H
+				color  : glTheme.altLight
 				Text {
 					text: qsTr("General")
 					anchors.centerIn: parent
@@ -158,76 +142,76 @@ ApplicationWindow {
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(0, sPannel.selectIdx)
+					onClicked    : switchPannel(0, panelIdx)
 				}
 			}
 			Rectangle {
-				id: btnJPEG
-				y      : 45
-				width  : sPANNEL_BTN_WIDTH
-				height : sPANNEL_BTN_HEIGHT
-				color  : "#444"
+				id     : btnJPEG
+				y      : Themes._PANNEL_BUTTON_H + 2
+				width  : Themes._PANNEL_BUTTON_W
+				height : Themes._PANNEL_BUTTON_H
+				color  : glTheme.textDark
 				Text {
 					text  : qsTr("JPEG")
-					color : "whitesmoke"
+					color : glTheme.textLight
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(1, sPannel.selectIdx)
+					onClicked    : switchPannel(1, panelIdx)
 				}
 			}
 			Rectangle {
-				id: btnPNG
-				y: 88
-				width: sPANNEL_BTN_WIDTH
-				height: sPANNEL_BTN_HEIGHT
-				color: "#444"
+				id     : btnPNG
+				y      : Themes._PANNEL_BUTTON_H * 2 + 3
+				width  : Themes._PANNEL_BUTTON_W
+				height : Themes._PANNEL_BUTTON_H
+				color  : glTheme.textDark
 				Text {
 					text  : qsTr("PNG")
-					color : "whitesmoke"
+					color : glTheme.textLight
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(2, sPannel.selectIdx)
+					onClicked    : switchPannel(2, panelIdx)
 				}
 			}
 			Rectangle {
-				id: btnGIF
-				y: 131
-				width: sPANNEL_BTN_WIDTH
-				height: sPANNEL_BTN_HEIGHT
-				color: "#444"
+				id     : btnGIF
+				y      : Themes._PANNEL_BUTTON_H * 3 + 4
+				width  : Themes._PANNEL_BUTTON_W
+				height : Themes._PANNEL_BUTTON_H
+				color  : glTheme.textDark
 				Text {
 					text  : qsTr("GIF")
-					color : "whitesmoke"
+					color : glTheme.textLight
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(3, sPannel.selectIdx)
+					onClicked    : switchPannel(3, panelIdx)
 				}
 			}
 			Rectangle {
-				id: btnSVG
-				y: 166
-				width: sPANNEL_BTN_WIDTH
-				height: sPANNEL_BTN_HEIGHT
-				color: "#444"
-				visible: false
+				id     : btnSVG
+				y      : Themes._PANNEL_BUTTON_H * 4 + 5
+				width  : Themes._PANNEL_BUTTON_W
+				height : Themes._PANNEL_BUTTON_H
+				color  : glTheme.textDark
+				visible: true
 				Text {
 					text  : qsTr("SVG")
-					color : "whitesmoke"
+					color : glTheme.textLight
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(4, sPannel.selectIdx)
+					onClicked    : switchPannel(4, panelIdx)
 				}
 			}
 		}
@@ -237,7 +221,7 @@ ApplicationWindow {
 
 			anchors {
 				fill: parent
-				leftMargin: sPANNEL_BTN_WIDTH + 28
+				leftMargin: Themes._PANNEL_BUTTON_W + 28
 			}
 
 			Item {
@@ -273,7 +257,10 @@ ApplicationWindow {
 						height                : 32
 						model                 : ["Light Cream", "Dark Brown", "Dark Blue"]
 						currentIndex          : _Colbi.getParamInt("General/colorTheme")
-						onCurrentIndexChanged : _Colbi.setOptionInt("General/colorTheme", currentIndex)
+						onCurrentIndexChanged : {
+							glTheme = Themes._COLLECTION[currentIndex];
+							_Colbi.setOptionInt("General/colorTheme", currentIndex)
+						}
 					}
 				}
 				Row {
@@ -293,12 +280,12 @@ ApplicationWindow {
 						height           : 32
 						font { pixelSize : 18; italic: true }
 						selectByMouse    : true
-						placeholderText  : qsTr("__optimized__")
+						placeholderText  : qsTr("__optim__")
 						text             : _Colbi.getParamStr("General/namePattern")
 						onEditingFinished: _Colbi.setOptionStr("General/namePattern", text)
-						selectionColor   : statColors[3]
+						selectionColor   : "#55"+ glTheme.status[2].substr(1)
 						background       : Rectangle {
-							border.color : statColors[5]
+							border.color : glTheme.altDark
 						}
 						MouseArea {
 							anchors.fill    : parent
@@ -395,7 +382,7 @@ ApplicationWindow {
 					}
 					Text {
 						height             : 32
-						color              : "gray"
+						color              : jpg_lossy.checked ? glTheme.textColorA : glTheme.altDark
 						text               : jpg_max_quality.value +"%"
 						font   { pixelSize : 18; italic: true }
 						verticalAlignment  : Text.AlignVCenter
@@ -448,7 +435,7 @@ ApplicationWindow {
 					}
 					Text {
 						height : 32
-						color  : "gray"
+						color  : glTheme.altDark
 						text   : png_min_quality.value +"%"
 						font   { pixelSize: 18; italic: true }
 						verticalAlignment : Text.AlignVCenter
@@ -507,7 +494,7 @@ ApplicationWindow {
 						verticalAlignment : Text.AlignVCenter
 					}
 					Text {
-						text: "< "; height  : 32; color: "black"
+						text: "< "; height  : 32; color: glTheme.textDark
 						font   { pixelSize  : 16; bold :  true }
 						verticalAlignment   : Text.AlignVCenter
 						MouseArea {
@@ -521,13 +508,13 @@ ApplicationWindow {
 					}
 					Text {
 						text   : (gif_max_colors.value + 1).toString()
-						height : 32; width  : 32; color  : statColors[5 - gif_recolor.checked]
+						height : 32; width  : 32; color  : gif_recolor.checked ? glTheme.status[4] : glTheme.altDark
 						font   { pixelSize  : 18; italic :  true }
 						verticalAlignment   : Text.AlignVCenter
 						horizontalAlignment : Text.AlignHCenter
 					}
 					Text {
-						text: " >"; height  : 32; color : "black"
+						text: " >"; height  : 32; color : glTheme.textDark
 						font   { pixelSize  : 16; bold  : true }
 						verticalAlignment   : Text.AlignVCenter
 						MouseArea {
@@ -577,7 +564,7 @@ ApplicationWindow {
 					value          : _Colbi.getParamReal("GIF/lossQuality")
 					onValueChanged : _Colbi.setOptionReal("GIF/lossQuality", value)
 					Text {
-						color : "gray"
+						color : glTheme.altDark
 						text  : "lossiness\n"+ (gif_loss_quality.value / 655.35 * 100).toFixed(1) +"%"
 						font  { pixelSize   : 18; italic: true }
 						horizontalAlignment : Text.AlignHCenter
@@ -600,11 +587,11 @@ ApplicationWindow {
 		const oldSet = setsGroup.children[oldIdx];
 		const newBtn = btnsGroup.children[newIdx];
 		const newSet = setsGroup.children[newIdx];
-		oldBtn.children[0].color = "whitesmoke"; newBtn.color = "#fefefe";
-		newBtn.children[0].color = oldBtn.color = "#444";
-		oldSet.visible = false;
+		oldBtn.children[0].color = glTheme.textLight;
+		newBtn.children[0].color = oldBtn.color = glTheme.textDark;
+		oldSet.visible = false;    newBtn.color = glTheme.altLight;
 		newSet.visible = true;
-		sPannel.selectIdx = newIdx;
+		panelIdx = newIdx;
 	}
 
 	ListModel {
@@ -625,7 +612,7 @@ ApplicationWindow {
 
 			delegate: Rectangle {
 				id      : delegateModel
-				color   : model.bgColor
+				color   : glTheme.background[index % 2]
 				height  : 30
 				anchors { right: parent.right; left: parent.left }
 
@@ -633,7 +620,7 @@ ApplicationWindow {
 					y      : 1
 					height : 28
 					width  : 5
-					color  : model.statColor
+					color  : glTheme.status[model.statID]
 				}
 				Column {
 					clip    : true
@@ -646,7 +633,7 @@ ApplicationWindow {
 					}
 					Text {
 						text  : model.fileName
-						color : "#333"
+						color : glTheme.textDark
 						font  { family: "Arial" }
 					}
 				}
@@ -659,7 +646,7 @@ ApplicationWindow {
 					}
 					Text {
 						text  : model.compress
-						color : "#4aa54a"
+						color : glTheme.textColorB
 						font  { family: "monospace"; italic: true }
 						Text {
 							anchors.left : parent.right;
@@ -676,7 +663,7 @@ ApplicationWindow {
 					}
 					Text {
 						text  : model.fileSize.substring(0, model.fileSize.indexOf(" "))
-						color : "#755151"
+						color : glTheme.textColorA
 						font  { family: "monospace"  }
 					}
 				}
@@ -689,15 +676,15 @@ ApplicationWindow {
 					Text {
 						width : 30
 						text  : model.fileSize.substring(model.fileSize.indexOf(" ") + 1)
-						color : "#666"
+						color : glTheme.altDark
 						font  { family: "serif" }
 					}
 				}
 				MouseArea {
 					anchors.fill    : parent
 					acceptedButtons : Qt.RightButton
-					onClicked       : taskMenu.popup()
-					onPressAndHold  : {
+					onClicked       : { taskMenu.num = index; taskMenu.popup() }
+					onPressAndHold  : { taskMenu.num = index;
 						if (mouse.source === Qt.MouseEventNotSynthesized)
 							taskMenu.popup()
 					}
@@ -755,8 +742,8 @@ ApplicationWindow {
 		id: taskMenu
 		property int num: -1;
 		MenuItem { text: "Show Store"; onTriggered: console.log("ok") }
-		MenuItem { text: "Pause"     ; onTriggered: _Colbi.waitTask(index) }
-		MenuItem { text: "Cancel"    ; onTriggered: _Colbi.killTask(index) }
+		MenuItem { text: "Pause"     ; onTriggered: _Colbi.waitTask(taskMenu.num) }
+		MenuItem { text: "Cancel"    ; onTriggered: _Colbi.killTask(taskMenu.num) }
 	}
 
 	function showCpyMenu(txtArea) {
