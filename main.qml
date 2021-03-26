@@ -11,8 +11,8 @@ ApplicationWindow {
 	height  : 480; minimumHeight : 480
 	visible : true
 
-	property int panelIdx : 0
-	property var glTheme  : null
+	property int curIdx  : 0
+	property var glTheme : null
 
 	color: glTheme.background[0]
 
@@ -53,63 +53,58 @@ ApplicationWindow {
 	Rectangle {
 		z       : 1
 		id      : pannel
-		color   : glTheme.altLight
+		color   : glTheme.pannelBG
 		radius  : 5
 		height  : 46
-		border  { color: "#55"+ glTheme.altDark.substr(1); width: 2 }
+		border  { color: glTheme.pannelBorder; width: 2 }
 		anchors { right: parent.right; left: parent.left }
-
-		Rectangle {
-			x      : 8
-			y      : 8
-			id     : fileButton
-			color  : glTheme.altDark
-			width  : 30
-			height : 30
-			radius : 5
-
+		Item {
+			width  : 30; x : 8
+			height : 30; y : 8
+			Rectangle {
+				id           : addFilesBtn
+				color        : glTheme.textDefault
+				radius       :  5
+				opacity      : .6
+				anchors.fill : parent
+			}
 			Text {
 				anchors.centerIn: parent
-				color : glTheme.textLight
+				color : glTheme.textAlter
 				text  : "+"
 				font  { family: "Arial"; pointSize: 12; bold: true }
 			}
-
 			MouseArea {
 				anchors.fill : parent
 				hoverEnabled : true
-				onEntered    : { fileButton.color = glTheme.textDark }
-				onExited     : { fileButton.color = glTheme.altDark }
+				onEntered    : { addFilesBtn.opacity = .8 }
+				onExited     : { addFilesBtn.opacity = .6 }
 				onClicked    : { fileDialog.open() }
 			}
 		}
 	}
-
-	Rectangle {
-		z      : 2
-		y      : 8
-		id     : settingsButton
-		color  : glTheme.altDark
-		width  : 30
-		height : 30
-		radius : 5
-		anchors {
-			right       : parent.right
-			rightMargin : 8
+	Item {
+		width   : 30; z : 2
+		height  : 30; y : 8
+		anchors { right : parent.right; rightMargin : 8 }
+		Rectangle {
+			id           : toggleSettsBtn
+			color        : glTheme.textDefault
+			radius       :  5
+			opacity      : .6
+			anchors.fill : parent
 		}
-
 		Text {
 			anchors.centerIn: parent
-			color : glTheme.textLight
+			color : glTheme.textAlter
 			text  : "G"
 			font  { family: fonico.name; pointSize: 12 }
 		}
-
 		MouseArea {
 			anchors.fill : parent
 			hoverEnabled : true
-			onEntered    : { parent.color = glTheme.textDark }
-			onExited     : { parent.color = glTheme.altDark }
+			onEntered    : { toggleSettsBtn.opacity = .8 }
+			onExited     : { toggleSettsBtn.opacity = .6 }
 			onClicked    : { sPannel.visible ^= 1 }
 		}
 	}
@@ -118,7 +113,7 @@ ApplicationWindow {
 		z       : 1
 		id      : sPannel
 		visible : true
-		color   : glTheme.altLight
+		color   : glTheme.pannelBG
 		anchors.fill: parent
 
 		Item {
@@ -134,15 +129,16 @@ ApplicationWindow {
 				y      : 1
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : glTheme.altLight
+				color  : setGeneral.visible ? "transparent" : glTheme.textDefault
 				Text {
-					text: qsTr("General")
+					text  : qsTr("General")
+					color : setGeneral.visible ? glTheme.textDefault : glTheme.textAlter
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(0, panelIdx)
+					onClicked    : switchPannel(0)
 				}
 			}
 			Rectangle {
@@ -150,16 +146,16 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H + 2
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : glTheme.textDark
+				color  : setJPEG.visible ? "transparent" : glTheme.textDefault
 				Text {
 					text  : qsTr("JPEG")
-					color : glTheme.textLight
+					color : setJPEG.visible ? glTheme.textDefault : glTheme.textAlter
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(1, panelIdx)
+					onClicked    : switchPannel(1)
 				}
 			}
 			Rectangle {
@@ -167,16 +163,16 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H * 2 + 3
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : glTheme.textDark
+				color  : setPNG.visible ? "transparent" : glTheme.textDefault
 				Text {
 					text  : qsTr("PNG")
-					color : glTheme.textLight
+					color : setPNG.visible ? glTheme.textDefault : glTheme.textAlter
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(2, panelIdx)
+					onClicked    : switchPannel(2)
 				}
 			}
 			Rectangle {
@@ -184,16 +180,16 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H * 3 + 4
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : glTheme.textDark
+				color  : setGIF.visible ? "transparent" : glTheme.textDefault
 				Text {
 					text  : qsTr("GIF")
-					color : glTheme.textLight
+					color : setGIF.visible ? glTheme.textDefault : glTheme.textAlter
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(3, panelIdx)
+					onClicked    : switchPannel(3)
 				}
 			}
 			Rectangle {
@@ -201,17 +197,17 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H * 4 + 5
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : glTheme.textDark
+				color  : setSVG.visible ? "transparent" : glTheme.textDefault
 				visible: true
 				Text {
 					text  : qsTr("SVG")
-					color : glTheme.textLight
+					color : setSVG.visible ? glTheme.textDefault : glTheme.textAlter
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
 				MouseArea {
 					anchors.fill : parent
-					onClicked    : switchPannel(4, panelIdx)
+					onClicked    : switchPannel(4)
 				}
 			}
 		}
@@ -235,11 +231,35 @@ ApplicationWindow {
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					CheckBox {
-					//	id               : g_moveToTemp
+						id               : g_moveToTemp
 						text             : qsTr("Move originals to temporary dir")
-						font { pixelSize : 18 }
 						checked          : _Colbi.getParamBool("General/moveToTemp")
 						nextCheckState   : _Colbi.setOptionBool("General/moveToTemp", checked)
+						indicator        : Rectangle {
+							implicitWidth  : 26; x: parent.leftPadding
+							implicitHeight : 26; y: parent.height / 2 - height / 2
+							color          : glTheme.textAlter
+							border.color   : glTheme.pannelBorder
+							Rectangle {
+								width  : 16; height : 16
+								color  : glTheme.checkMark ? "transparent" : glTheme.textDefault
+								visible: parent.parent.checked
+								anchors.centerIn: parent
+								Text {
+									text  : glTheme.checkMark
+									color : glTheme.textDefault
+									font  { family: fonico.name; pixelSize: 16 }
+									anchors.centerIn: parent
+								}
+							}
+						}
+						contentItem: Text {
+							text  : parent.text
+							color : glTheme.textDefault
+							font  { pixelSize : 18 }
+							verticalAlignment : Text.AlignVCenter
+							leftPadding       : parent.indicator.width + parent.spacing
+						}
 					}
 				}
 				Row {
@@ -255,7 +275,7 @@ ApplicationWindow {
 					}
 					ComboBox {
 						height                : 32
-						model                 : ["Light Cream", "Dark Brown", "Dark Blue"]
+						model                 : ["Light Cream", "Dark Mary", "Dark Blue"]
 						currentIndex          : _Colbi.getParamInt("General/colorTheme")
 						onCurrentIndexChanged : {
 							glTheme = Themes._COLLECTION[currentIndex];
@@ -322,9 +342,10 @@ ApplicationWindow {
 					CheckBox {
 					//	id               : jpg_Progressive
 						text             : qsTr("Progressive")
-						font { pixelSize : 18 }
 						checked          : _Colbi.getParamBool("JPEG/progressive")
 						nextCheckState   : _Colbi.setOptionBool("JPEG/progressive", checked)
+						//indicator        : g_moveToTemp.indicator
+						//contentItem      : g_moveToTemp.contentItem
 					}
 				}
 				Row {
@@ -580,20 +601,6 @@ ApplicationWindow {
 		}
 	}
 
-	function switchPannel(newIdx, oldIdx) {
-		if (newIdx === oldIdx)
-			return;
-		const oldBtn = btnsGroup.children[oldIdx];
-		const oldSet = setsGroup.children[oldIdx];
-		const newBtn = btnsGroup.children[newIdx];
-		const newSet = setsGroup.children[newIdx];
-		oldBtn.children[0].color = glTheme.textLight;
-		newBtn.children[0].color = oldBtn.color = glTheme.textDark;
-		oldSet.visible = false;    newBtn.color = glTheme.altLight;
-		newSet.visible = true;
-		panelIdx = newIdx;
-	}
-
 	ListModel {
 		id: taskListModel
 	}
@@ -633,7 +640,7 @@ ApplicationWindow {
 					}
 					Text {
 						text  : model.fileName
-						color : glTheme.textDark
+						color : glTheme.textDefault
 						font  { family: "Arial" }
 					}
 				}
@@ -744,6 +751,14 @@ ApplicationWindow {
 		MenuItem { text: "Show Store"; onTriggered: console.log("ok") }
 		MenuItem { text: "Pause"     ; onTriggered: _Colbi.waitTask(taskMenu.num) }
 		MenuItem { text: "Cancel"    ; onTriggered: _Colbi.killTask(taskMenu.num) }
+	}
+
+	function switchPannel(newIdx) {
+		if (newIdx === curIdx)
+			return;
+		setsGroup.children[ curIdx ].visible = false;
+		setsGroup.children[ newIdx ].visible = true;
+		curIdx = newIdx;
 	}
 
 	function showCpyMenu(txtArea) {
