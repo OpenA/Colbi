@@ -44,9 +44,9 @@ auto PngWrk::reload(size_t size) -> void {
 }
 auto JpgWrk::reload(size_t size) -> void {
 	m_rawSize     = size, m_optSize = 0;
-	m_quality     =  INT_Param["JPEG/maxQuality"];
 	m_progressive = BOOL_Param["JPEG/progressive"];
-	m_arithmetic  = BOOL_Param["JPEG/arithmetic" ];
+	m_algorithm   =  INT_Param["JPEG/algorithm"];
+	m_quality     =  INT_Param["JPEG/maxQuality"];
 }
 
 Colbi::Colbi(QObject *parent) : QObject(parent)
@@ -115,7 +115,7 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 		status = S_Error;
 	} else if (mime.inherits("image/jpeg")) {
 		taskList.append(
-			new JpgWrk( this, num, size, INT_Param["JPEG/maxQuality"], BOOL_Param["JPEG/progressive"], BOOL_Param["JPEG/arithmetic" ] )
+			new JpgWrk( this, num, size, INT_Param["JPEG/maxQuality"], BOOL_Param["JPEG/progressive"], INT_Param["JPEG/algorithm"])
 		);
 	} else if (mime.inherits("image/png") || mime.inherits("image/bmp")) {
 		taskList.append(
@@ -210,12 +210,12 @@ auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
 
 int main(int argc, char *argv[])
 {
-	STR_Param["General/namePattern"] = "";
    BOOL_Param["General/moveToTemp" ] = true;
 	INT_Param["General/colorTheme" ] = 0;
+	STR_Param["General/namePattern"] = "_optim_";
 
    BOOL_Param["JPEG/progressive"] = true;
-   BOOL_Param["JPEG/arithmetic" ] = false;
+	INT_Param["JPEG/algorithm"  ] = 0;
 	INT_Param["JPEG/maxQuality" ] = -90;
 
    BOOL_Param["PNG/8bitColors"] = true;

@@ -14,7 +14,7 @@ ApplicationWindow {
 	property int curIdx  : 0
 	property var glTheme : null
 
-	color: glTheme.background[0]
+	color: glTheme.taskListBG[0]
 
 	FontLoader { id: fonico; source: "lib/_Dist_/fonico.ttf" }
 
@@ -56,7 +56,7 @@ ApplicationWindow {
 		color   : glTheme.pannelBG
 		radius  : 5
 		height  : 46
-		border  { color: glTheme.pannelBorder; width: 2 }
+		border  { color: glTheme.inputBorder; width: 2 }
 		anchors { right: parent.right; left: parent.left }
 		Item {
 			width  : 30; x : 8
@@ -70,7 +70,7 @@ ApplicationWindow {
 			}
 			Text {
 				anchors.centerIn: parent
-				color : glTheme.textAlter
+				color : glTheme.inputFill
 				text  : "+"
 				font  { family: "Arial"; pointSize: 12; bold: true }
 			}
@@ -96,7 +96,7 @@ ApplicationWindow {
 		}
 		Text {
 			anchors.centerIn: parent
-			color : glTheme.textAlter
+			color : glTheme.inputFill
 			text  : "G"
 			font  { family: fonico.name; pointSize: 12 }
 		}
@@ -132,7 +132,7 @@ ApplicationWindow {
 				color  : setGeneral.visible ? "transparent" : glTheme.textDefault
 				Text {
 					text  : qsTr("General")
-					color : setGeneral.visible ? glTheme.textDefault : glTheme.textAlter
+					color : setGeneral.visible ? glTheme.textDefault : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -149,7 +149,7 @@ ApplicationWindow {
 				color  : setJPEG.visible ? "transparent" : glTheme.textDefault
 				Text {
 					text  : qsTr("JPEG")
-					color : setJPEG.visible ? glTheme.textDefault : glTheme.textAlter
+					color : setJPEG.visible ? glTheme.textDefault : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -166,7 +166,7 @@ ApplicationWindow {
 				color  : setPNG.visible ? "transparent" : glTheme.textDefault
 				Text {
 					text  : qsTr("PNG")
-					color : setPNG.visible ? glTheme.textDefault : glTheme.textAlter
+					color : setPNG.visible ? glTheme.textDefault : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -183,7 +183,7 @@ ApplicationWindow {
 				color  : setGIF.visible ? "transparent" : glTheme.textDefault
 				Text {
 					text  : qsTr("GIF")
-					color : setGIF.visible ? glTheme.textDefault : glTheme.textAlter
+					color : setGIF.visible ? glTheme.textDefault : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -201,7 +201,7 @@ ApplicationWindow {
 				visible: true
 				Text {
 					text  : qsTr("SVG")
-					color : setSVG.visible ? glTheme.textDefault : glTheme.textAlter
+					color : setSVG.visible ? glTheme.textDefault : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -225,72 +225,31 @@ ApplicationWindow {
 				visible      : true
 				anchors.fill : parent
 
-				Row {
-					y             : 20
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					CheckBox {
-						id               : g_moveToTemp
-						text             : qsTr("Move originals to temporary dir")
-						checked          : _Colbi.getParamBool("General/moveToTemp")
-						nextCheckState   : _Colbi.setOptionBool("General/moveToTemp", checked)
-						indicator        : Rectangle {
-							implicitWidth  : 26; x: parent.leftPadding
-							implicitHeight : 26; y: parent.height / 2 - height / 2
-							color          : glTheme.textAlter
-							border.color   : glTheme.pannelBorder
-							Rectangle {
-								width  : 16; height : 16
-								color  : glTheme.checkMark ? "transparent" : glTheme.textDefault
-								visible: parent.parent.checked
-								anchors.centerIn: parent
-								Text {
-									text  : glTheme.checkMark
-									color : glTheme.textDefault
-									font  { family: fonico.name; pixelSize: 16 }
-									anchors.centerIn: parent
-								}
-							}
-						}
-						contentItem: Text {
-							text  : parent.text
-							color : glTheme.textDefault
-							font  { pixelSize : 18 }
-							verticalAlignment : Text.AlignVCenter
-							leftPadding       : parent.indicator.width + parent.spacing
-						}
-					}
-				}
-				Row {
-					y             : 75
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					Text {
-						verticalAlignment : Text.AlignVCenter
-						font.pixelSize    : 18
-						height            : 32
-						text              : qsTr("Color Theme:  ")
-					}
-					ComboBox {
-						height                : 32
-						model                 : ["Light Cream", "Dark Mary", "Dark Blue"]
-						currentIndex          : _Colbi.getParamInt("General/colorTheme")
-						onCurrentIndexChanged : {
-							glTheme = Themes._COLLECTION[currentIndex];
-							_Colbi.setOptionInt("General/colorTheme", currentIndex)
-						}
-					}
-				}
+				property var params : [{
+					_Param: "General/moveToTemp",
+					_Title: qsTr("Move originals to temporary dir"),
+					_Check: _Colbi.getParamBool("General/moveToTemp"),
+					_Swith: false
+				}, {
+					_Param: "General/colorTheme",
+					_Title: qsTr("Color Theme:"),
+					_Model: ["Light Cream", "Dark Mary", "Dark Blue"],
+					_Index: (() => {
+						const thIdx = _Colbi.getParamInt("General/colorTheme");
+						glTheme = Themes._COLLECTION[thIdx];
+						return thIdx;
+					})()
+				}]
+
 				Row {
 					y             : 130
 					height        : 40
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					Text {
-						height            : 32
-						text              : qsTr("original_name")
+						height : 32
+						text   : qsTr("original_name")
+						color  : glTheme.textDefault
 						font { pixelSize  : 18; italic: true }
 						verticalAlignment : Text.AlignVCenter
 					}
@@ -300,12 +259,12 @@ ApplicationWindow {
 						height           : 32
 						font { pixelSize : 18; italic: true }
 						selectByMouse    : true
-						placeholderText  : qsTr("__optim__")
+						color            : glTheme.textColorA
 						text             : _Colbi.getParamStr("General/namePattern")
 						onEditingFinished: _Colbi.setOptionStr("General/namePattern", text)
 						selectionColor   : "#55"+ glTheme.status[2].substr(1)
 						background       : Rectangle {
-							border.color : glTheme.altDark
+							color        : glTheme.taskListBG[1]
 						}
 						MouseArea {
 							anchors.fill    : parent
@@ -320,8 +279,9 @@ ApplicationWindow {
 						}
 					}
 					Text {
-						height            : 32
-						text              : qsTr(".jpg")
+						height : 32
+						text   : qsTr(".jpg")
+						color  : glTheme.textDefault
 						font { pixelSize  : 18; italic: true }
 						verticalAlignment : Text.AlignVCenter
 					}
@@ -334,38 +294,18 @@ ApplicationWindow {
 
 				property int qmax : _Colbi.getParamInt("JPEG/maxQuality")
 
-				Row {
-					y             : 20
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					CheckBox {
-					//	id               : jpg_Progressive
-						text             : qsTr("Progressive")
-						checked          : _Colbi.getParamBool("JPEG/progressive")
-						nextCheckState   : _Colbi.setOptionBool("JPEG/progressive", checked)
-						//indicator        : g_moveToTemp.indicator
-						//contentItem      : g_moveToTemp.contentItem
-					}
-				}
-				Row {
-					y             : 75
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					Text {
-						verticalAlignment : Text.AlignVCenter
-						font.pixelSize    : 18
-						height            : 32
-						text              : qsTr("DCT Algorithm:  ")
-					}
-					ComboBox {
-						height                : 32
-						model                 : ["Huffman", "Arithmetic"]
-						currentIndex          : _Colbi.getParamBool("JPEG/arithmetic")
-						onCurrentIndexChanged : _Colbi.setOptionBool("JPEG/arithmetic", Boolean(currentIndex))
-					}
-				}
+				property var params : [{
+					_Param: "JPEG/progressive",
+					_Title: qsTr("Progressive"),
+					_Check: _Colbi.getParamBool("JPEG/progressive"),
+					_Swith: false
+				}, {
+					_Param: "JPEG/algorithm",
+					_Title: qsTr("DCT Algorithm:"),
+					_Model: ["Huffman", "Arithmetic"],
+					_Index: _Colbi.getParamInt("JPEG/algorithm"),
+				}]
+
 				Row {
 					y             : 130
 					height        : 40
@@ -414,19 +354,13 @@ ApplicationWindow {
 				id      : setPNG
 				visible : false
 
-				Row {
-					y             : 20
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					CheckBox {
-					//	id               : png_8bit_colors
-						text             : qsTr("Convert all to 8bit pallete")
-						font { pixelSize : 18 }
-						checked          : _Colbi.getParamBool("PNG/8bitColors")
-						nextCheckState   : _Colbi.setOptionBool("PNG/8bitColors", checked)
-					}
-				}
+				property var params : [{
+					_Param: "PNG/8bitColors",
+					_Title: qsTr("Convert all to 8bit pallete"),
+					_Check: _Colbi.getParamBool("PNG/8bitColors"),
+					_Swith: false
+				}]
+
 				Row {
 					y             : 140
 					height        : 40
@@ -467,47 +401,27 @@ ApplicationWindow {
 				id: setGIF
 				visible: false
 
-				Row {
-					y             : 20
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					Switch {
-						id        : gif_recolor
-						text      : qsTr("Rebuild Colors")
-						font      { pixelSize: 18 }
-						checked   : _Colbi.getParamBool("GIF/reColor")
-						onClicked : _Colbi.setOptionBool("GIF/reColor", checked)
-					}
-				}
-				Row {
-					y             : 75
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					Text {
-						verticalAlignment : Text.AlignVCenter
-						font.pixelSize    : 18
-						height            : 32
-						text              : qsTr("Dithering:  ")
-					}
-					ComboBox {
-						height                : 32
-						enabled               : gif_recolor.checked
-						currentIndex          : _Colbi.getParamInt("GIF/ditherPlan")
-						onCurrentIndexChanged : _Colbi.setOptionInt("GIF/ditherPlan", currentIndex)
-						model                 : [
-						  "Noise", "3x3 Quads", "4x4 Quads", "8x8 Quads", "45 Deg. Lines",
-						  "64x64 Quads", "Square Halftone", "Triangle Halftone", "8x8 Halftone"
-						]
-					}
-				}
+				property var params : [{
+					_Param: "GIF/reColor",
+					_Title: qsTr("Rebuild Colors"),
+					_Check: _Colbi.getParamBool("GIF/reColor"),
+					_Swith: true
+				}, {
+					_Param: "GIF/ditherPlan",
+					_Title: qsTr("Dithering:"),
+					_Index: _Colbi.getParamInt("GIF/ditherPlan"),
+					_Model: [
+					  "Noise", "3x3 Quads", "4x4 Quads", "8x8 Quads", "45 Deg. Lines",
+					  "64x64 Quads", "Square Halftone", "Triangle Halftone", "8x8 Halftone"
+					]
+				}]
+
 				Row {
 					y             : 140
 					height        : 40
 					anchors.right : parent.right
 					anchors.left  : parent.left
-					enabled       : gif_recolor.checked
+					enabled       : setGIF.params[0]._Check
 					Text {
 						height : 32
 						text   : qsTr("Max Colors to Use:   ")
@@ -529,7 +443,7 @@ ApplicationWindow {
 					}
 					Text {
 						text   : (gif_max_colors.value + 1).toString()
-						height : 32; width  : 32; color  : gif_recolor.checked ? glTheme.status[4] : glTheme.altDark
+						height : 32; width  : 32; color  : setGIF.params[0]._Check ? glTheme.status[4] : glTheme.altDark
 						font   { pixelSize  : 18; italic :  true }
 						verticalAlignment   : Text.AlignVCenter
 						horizontalAlignment : Text.AlignHCenter
@@ -567,36 +481,198 @@ ApplicationWindow {
 						to             : 255
 						stepSize       : 1
 						snapMode       : Slider.SnapAlways
-						enabled        : gif_recolor.checked
+						enabled        : setGIF.params[0]._Check
 						value          : _Colbi.getParamInt("GIF/maxColors")
 						onValueChanged : _Colbi.setOptionInt("GIF/maxColors", value)
 					}
 				}
-				Dial {
-					id             : gif_loss_quality
-					x              : 256
-					y              : 42
-					width          : 130
-					height         : 130
-					from           : 655.35
-					to             : 0
-					stepSize       : 0.05
-					snapMode       : Dial.SnapOnRelease
-					value          : _Colbi.getParamReal("GIF/lossQuality")
-					onValueChanged : _Colbi.setOptionReal("GIF/lossQuality", value)
+				Rectangle {
+					x      : 256
+					y      : 42
+					width  : 130
+					height : 130
+					radius : 65
+					color  : glTheme.inputFill
 					Text {
-						color : glTheme.altDark
+						color : glTheme.textDefault
 						text  : "lossiness\n"+ (gif_loss_quality.value / 655.35 * 100).toFixed(1) +"%"
 						font  { pixelSize   : 18; italic: true }
 						horizontalAlignment : Text.AlignHCenter
 						verticalAlignment   : Text.AlignVCenter
 						anchors.centerIn    : parent
 					}
+					Dial {
+						id             : gif_loss_quality
+						from           : 655.35
+						to             : 0
+						stepSize       : 0.05
+						snapMode       : Dial.SnapOnRelease
+						value          : _Colbi.getParamReal("GIF/lossQuality")
+						onValueChanged : _Colbi.setOptionReal("GIF/lossQuality", value)
+						palette { dark : glTheme.textDefault }
+						anchors.fill   : parent
+					}
 				}
 			}
 			Item {
 				id: setSVG
 				visible: false
+			}
+		}
+		Item {
+			id           : setConstruct
+			visible      : true
+
+			anchors {
+				fill: parent
+				leftMargin: Themes._PANNEL_BUTTON_W + 28
+			}
+
+			Row {
+				id            : g_Checkx
+				y             : 20
+				height        : 40
+				anchors.left  : parent.left
+				anchors.right : parent.right
+
+				property string _Param : setGeneral.params[0]._Param
+				property string _Title : setGeneral.params[0]._Title
+				property bool   _Check : setGeneral.params[0]._Check
+				property bool   _Swith : setGeneral.params[0]._Swith
+
+				AbstractButton {
+					padding    : 6
+					spacing    : 6
+					onClicked  : {
+						g_Checkx._Check ^= 1;
+						setsGroup.children[ curIdx ].params[0]._Check = g_Checkx._Check;
+						_Colbi.setOptionBool(g_Checkx._Param, g_Checkx._Check);
+					}
+					indicator  : Rectangle {
+						implicitHeight : 26
+						implicitWidth  : g_Checkx._Swith ? 48 : 26
+						radius         : g_Checkx._Swith ? 13 : 0
+						color          : g_Checkx._Swith && g_Checkx._Check ? glTheme.textDefault : glTheme.inputFill
+						border.color   : glTheme.inputBorder
+						x              : parent.leftPadding
+						y              : parent.height / 2 - height / 2
+						Rectangle {
+							x      : g_Checkx._Swith ? (g_Checkx._Check ? parent.width - 26 : 0) : 5.5
+							y      : g_Checkx._Swith ? 0  : 5.5
+							width  : g_Checkx._Swith ? 26 : 16
+							height : g_Checkx._Swith ? 26 : 16
+							radius : parent.radius
+							color  : (
+								g_Checkx._Swith && parent.parent.down ? glTheme.inputBorder :
+								g_Checkx._Check && !glTheme.checkMark ? glTheme.textDefault : glTheme.inputFill)
+							border.color: (
+								g_Checkx._Swith                       ? glTheme.inputBorder : glTheme.inputFill)
+							Text {
+								visible : !g_Checkx._Swith && g_Checkx._Check
+								text    : glTheme.checkMark
+								color   : glTheme.textDefault
+								font    { family : fonico.name; pixelSize: 16 }
+								anchors.centerIn : parent
+							}
+						}
+					}
+					contentItem: Text {
+						text  : g_Checkx._Title
+						color : glTheme.textDefault
+						font  { pixelSize : 18 }
+						verticalAlignment : Text.AlignVCenter
+						leftPadding       : parent.indicator.width + parent.spacing
+					}
+				}
+			}
+			Row {
+				id            : g_Select
+				y             : 75
+				height        : 40
+				anchors.right : parent.right
+				anchors.left  : parent.left
+
+				property string _Param : setGeneral.params[1]._Param
+				property string _Title : setGeneral.params[1]._Title
+				property var    _Model : setGeneral.params[1]._Model
+				property int    _Index : setGeneral.params[1]._Index
+
+				Text {
+					height: 32
+					text  : g_Select._Title
+					color : glTheme.textDefault
+					font  { pixelSize : 18 }
+					verticalAlignment : Text.AlignVCenter
+					rightPadding      : 10
+				}
+				ComboBox {
+					id       : g_Select_Box
+					width    : 145
+					height   : 32
+					model    : g_Select._Model
+					delegate : ItemDelegate {
+						anchors { right: parent.right; left: parent.left }
+						contentItem : Text {
+							text  : modelData
+							color : g_Select_Box.highlightedIndex !== index ? glTheme.textDefault : glTheme.inputFill
+							font  { pixelSize : 14; family: 'serif'; italic: true }
+							verticalAlignment : Text.AlignVCenter
+						}
+						background: Rectangle {
+							color : g_Select_Box.highlightedIndex === index ? glTheme.textDefault : 'transparent'
+							opacity : 0.75
+						}
+						onClicked : {
+							const target = setsGroup.children[ curIdx ].params[1];
+							if (target._Index !== index) {
+								_Colbi.setOptionInt(g_Select._Param, (target._Index = g_Select._Index = index));
+								if (g_Select._Param === "General/colorTheme")
+									glTheme = Themes._COLLECTION[index];
+							}
+						}
+					}
+					background: Rectangle {
+						color        : glTheme.inputFill
+						border.color : glTheme.inputBorder
+					}
+					indicator: Text {
+						text  : "A"
+						color : glTheme.textDefault
+						font  { pixelSize   : 10; family: fonico.name }
+						topPadding          : 11
+						anchors.rightMargin : 10
+						anchors.right       : parent.right
+					}
+					contentItem: Item {
+						anchors.left        : parent.left
+						anchors.leftMargin  : 10
+						anchors.right       : parent.right;
+						anchors.rightMargin : 30
+						Text {
+							anchors.fill: parent
+							clip  : true
+							text  : g_Select._Model[ g_Select._Index ]
+							color : glTheme.textDefault
+							font  { pixelSize : 14; family: 'serif'; italic: true }
+							verticalAlignment : Text.AlignVCenter
+						}
+					}
+					popup: Popup {
+						y       : parent.height - 1
+						width   : parent.width
+						padding : 1
+
+						contentItem: ListView {
+							clip  : true
+							model : g_Select_Box.delegateModel
+							implicitHeight: contentHeight
+						}
+						background: Rectangle {
+							color        : glTheme.inputFill
+							border.color : glTheme.inputBorder
+						}
+					}
+				}
 			}
 		}
 	}
@@ -619,7 +695,7 @@ ApplicationWindow {
 
 			delegate: Rectangle {
 				id      : delegateModel
-				color   : glTheme.background[index % 2]
+				color   : glTheme.taskListBG[index % 2]
 				height  : 30
 				anchors { right: parent.right; left: parent.left }
 
@@ -756,9 +832,19 @@ ApplicationWindow {
 	function switchPannel(newIdx) {
 		if (newIdx === curIdx)
 			return;
-		setsGroup.children[ curIdx ].visible = false;
-		setsGroup.children[ newIdx ].visible = true;
+		const oldSets = setsGroup.children[ curIdx ];
+		const nexSets = setsGroup.children[ newIdx ];
 		curIdx = newIdx;
+
+		for (let i = 0; i < setConstruct.children.length; i++) {
+			const row = setConstruct.children[i];
+			const params = nexSets.params[i];
+			if ((row.visible = Boolean(params))) {
+				Object.assign(row, params);
+			}
+		}
+		oldSets.visible = false;
+		nexSets.visible = true;
 	}
 
 	function showCpyMenu(txtArea) {

@@ -112,7 +112,7 @@ auto JpgWrk::optim() -> bool
 
 		try {
 			mozjInit(srcinfo, dstinfo, reinterpret_cast<unsigned char*>(jpg_img.data()), jpg_img.size());
-			mozjLosslessOptim(srcinfo, dstinfo, &out_data, &out_size, m_progressive, m_arithmetic);
+			mozjLosslessOptim(srcinfo, dstinfo, &out_data, &out_size, m_progressive, m_algorithm);
 
 			if (m_quality >= 0) {
 				if (m_rawSize > out_size)
@@ -124,7 +124,7 @@ auto JpgWrk::optim() -> bool
 				do {
 					jpeg_mem_src    (srcinfo,        (!best_size ? out_data : tmp_data), tmp_size);
 					jpeg_read_header(srcinfo, TRUE);   best_size = tmp_size;
-					mozjLossyOptim  (srcinfo, dstinfo, &tmp_data, &tmp_size, m_progressive, m_arithmetic, m_quality);
+					mozjLossyOptim  (srcinfo, dstinfo, &tmp_data, &tmp_size, m_progressive, m_algorithm, m_quality);
 				} while (90 < (best_size - tmp_size));
 
 				if (tmp_size < out_size) {

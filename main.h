@@ -133,12 +133,12 @@ public:
 class GifWrk : public ImgWrk
 {
 protected:
-	float m_lossy;
-	qint8 m_dither;
-	bool  m_recolor;
+	quint8 m_dither;
+	float  m_lossy;
+	bool   m_recolor;
 	bool optim() override;
 public:
-	explicit GifWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool r, qint8 d, float l) : ImgWrk(p,n,s,q)
+	explicit GifWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool r, quint8 d, float l) : ImgWrk(p,n,s,q)
 	{
 		m_recolor = r, m_dither = d, m_lossy = l;
 	}
@@ -164,13 +164,13 @@ public:
 class JpgWrk : public ImgWrk
 {
 protected:
-	bool m_progressive, m_arithmetic;
-	bool optim() override;
+	quint8 m_algorithm;
+	bool   m_progressive;
+	bool   optim() override;
 public:
-	explicit JpgWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool o, bool a) : ImgWrk(p,n,s,q)
+	explicit JpgWrk(Colbi *p, quint16 n, size_t s, qint8 q, bool o, quint8 a) : ImgWrk(p,n,s,q)
 	{
-		m_progressive = o;
-		m_arithmetic  = a;
+		m_progressive = o, m_algorithm = a;
 	}
 	void reload(size_t) override;
 };

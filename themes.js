@@ -12,12 +12,11 @@ const status_defaults = [
 ]
 
 const light_cream = {
-	background  : ["floralwhite", "#feeddc"],
+	inputFill   : "whitesmoke",
+	inputBorder : "#ddd",
+	taskListBG  : ["floralwhite", "#feeddc"],
 	pannelBG    : "#fefefe",
-	pannelBorder: "#ddd",
-
 	textDefault : "#424242",
-	textAlter   : "whitesmoke",
 	checkMark   : "V",
 
 	altDark     : "#7e7e7e",
@@ -30,17 +29,15 @@ const light_cream = {
 }
 
 const dark_mary = {
-	background  : ["#292929", "#353535"],
+	inputFill   : "#944545",
+	inputBorder : "#502424",
+	taskListBG  : ["#292929", "#353535"],
 	pannelBG    : "#853737",
-	pannelBorder: "#502424",
-	//"#ebe5d7",
-
 	textDefault : "#150404",
-	textAlter   : "#944545",
 	checkMark   : "X",
 
 	altDark     : "#5c1f1f",
-	altLight    : "#853737",
+	altLight    : "#853737",//"#ebe5d7",
 	textDark    : "#eeeeee",
 	textLight   : "#999999",
 	textColorA  : "#755151",
