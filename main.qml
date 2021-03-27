@@ -343,7 +343,7 @@ ApplicationWindow {
 					}
 					Text {
 						height             : 32
-						color              : jpg_lossy.checked ? glTheme.textColorA : glTheme.altDark
+						color              : jpg_lossy.checked ? glTheme.textDefault : glTheme.inputBorder
 						text               : jpg_max_quality.value +"%"
 						font   { pixelSize : 18; italic: true }
 						verticalAlignment  : Text.AlignVCenter
@@ -390,7 +390,7 @@ ApplicationWindow {
 					}
 					Text {
 						height : 32
-						color  : glTheme.altDark
+						color  : glTheme.textDefault
 						text   : png_min_quality.value +"%"
 						font   { pixelSize: 18; italic: true }
 						verticalAlignment : Text.AlignVCenter
@@ -429,7 +429,7 @@ ApplicationWindow {
 						verticalAlignment : Text.AlignVCenter
 					}
 					Text {
-						text: "< "; height  : 32; color: glTheme.textDark
+						text: "< "; height  : 32; color: glTheme.textDefault
 						font   { pixelSize  : 16; bold :  true }
 						verticalAlignment   : Text.AlignVCenter
 						MouseArea {
@@ -443,13 +443,13 @@ ApplicationWindow {
 					}
 					Text {
 						text   : (gif_max_colors.value + 1).toString()
-						height : 32; width  : 32; color  : setGIF.params[0]._Check ? glTheme.status[4] : glTheme.altDark
+						height : 32; width  : 32; color  : g_Select.enabled ? glTheme.textColorC : glTheme.inputBorder
 						font   { pixelSize  : 18; italic :  true }
 						verticalAlignment   : Text.AlignVCenter
 						horizontalAlignment : Text.AlignHCenter
 					}
 					Text {
-						text: " >"; height  : 32; color : glTheme.textDark
+						text: " >"; height  : 32; color : glTheme.textDefault
 						font   { pixelSize  : 16; bold  : true }
 						verticalAlignment   : Text.AlignVCenter
 						MouseArea {
@@ -591,6 +591,8 @@ ApplicationWindow {
 				height        : 40
 				anchors.right : parent.right
 				anchors.left  : parent.left
+				enabled       : g_Checkx._Swith ? g_Checkx._Check : true
+				opacity       : enabled ? 1 : .5
 
 				property string _Param : setGeneral.params[1]._Param
 				property string _Title : setGeneral.params[1]._Title
@@ -651,7 +653,7 @@ ApplicationWindow {
 						Text {
 							anchors.fill: parent
 							clip  : true
-							text  : g_Select._Model[ g_Select._Index ]
+							text  : g_Select._Model[ g_Select._Index ] || ''
 							color : glTheme.textDefault
 							font  { pixelSize : 14; family: 'serif'; italic: true }
 							verticalAlignment : Text.AlignVCenter
@@ -716,7 +718,7 @@ ApplicationWindow {
 					}
 					Text {
 						text  : model.fileName
-						color : glTheme.textDefault
+						color : glTheme.textColorC
 						font  { family: "Arial" }
 					}
 				}
@@ -759,7 +761,7 @@ ApplicationWindow {
 					Text {
 						width : 30
 						text  : model.fileSize.substring(model.fileSize.indexOf(" ") + 1)
-						color : glTheme.altDark
+						color : glTheme.textColorD
 						font  { family: "serif" }
 					}
 				}

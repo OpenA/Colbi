@@ -12,36 +12,38 @@ const status_defaults = [
 ]
 
 const light_cream = {
-	inputFill   : "whitesmoke",
-	inputBorder : "#ddd",
 	taskListBG  : ["floralwhite", "#feeddc"],
 	pannelBG    : "#fefefe",
+
+	inputFill   : "whitesmoke",
+	inputBorder : "#ddd",
+
 	textDefault : "#424242",
 	checkMark   : "V",
 
-	altDark     : "#7e7e7e",
-	altLight    : "#fefefe",
-	textDark    : "#424242",
-	textLight   : "whitesmoke",
 	textColorA  : "#755151",
 	textColorB  : "#4aa54a",
+	textColorC  : "#424242",
+	textColorD  : "#777",
+
 	status      : status_defaults
 }
 
 const dark_mary = {
-	inputFill   : "#944545",
-	inputBorder : "#502424",
 	taskListBG  : ["#292929", "#353535"],
 	pannelBG    : "#853737",
+
 	textDefault : "#150404",
 	checkMark   : "X",
 
-	altDark     : "#5c1f1f",
-	altLight    : "#853737",//"#ebe5d7",
-	textDark    : "#eeeeee",
-	textLight   : "#999999",
-	textColorA  : "#755151",
+	inputFill   : "#944545",
+	inputBorder : "#502424",
+
+	textColorA  : "#be4e4e",
 	textColorB  : "#4aa54a",
+	textColorC  : "#ebe5d7",
+	textColorD  : "#999",
+
 	status      : status_defaults
 }
 
