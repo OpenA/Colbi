@@ -242,10 +242,10 @@ ApplicationWindow {
 				}]
 
 				Row {
-					y             : 130
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
+					y       : 130
+					height  : 40
+					anchors { left: parent.left; right : parent.right }
+
 					Text {
 						height : 32
 						text   : qsTr("original_name")
@@ -292,8 +292,7 @@ ApplicationWindow {
 				visible      : false
 				anchors.fill : parent
 
-				property int qmax : _Colbi.getParamInt("JPEG/maxQuality")
-
+				property var q_main : _Colbi.getParamInt("JPEG/maxQuality")
 				property var params : [{
 					_Param: "JPEG/progressive",
 					_Title: qsTr("Progressive"),
@@ -304,48 +303,56 @@ ApplicationWindow {
 					_Title: qsTr("DCT Algorithm:"),
 					_Model: ["Huffman", "Arithmetic"],
 					_Index: _Colbi.getParamInt("JPEG/algorithm"),
+				},{
+					_Param : "JPEG/maxQuality",
+					_Value : q_main,
+					_Maxiv : 100
 				}]
 
 				Row {
 					y             : 130
 					height        : 40
+
 					anchors.right : parent.right
 					anchors.left  : parent.left
 					RadioButton {
 						id        : jpg_lossless
 						height    : 32
 						text      : qsTr("Lossless")
-						checked   : setJPEG.qmax < 0
-						onClicked : _Colbi.setOptionInt("JPEG/maxQuality", -(jpg_max_quality.value))
+						checked   : setJPEG.q_main < 0
+						palette   {
+							base : glTheme.inputFill;  light : glTheme.inputBorder
+							mid  : glTheme.inputBorder; text : glTheme.textDefault
+						}
+						contentItem: Text {
+							text  : parent.text
+							color : glTheme.textDefault
+							font  { pixelSize : 16; italic: true }
+							verticalAlignment : Text.AlignVCenter
+							leftPadding       : parent.indicator.width + parent.spacing
+						}
+						onToggled : setCurRange(setJPEG.q_main > 0 ? -setJPEG.q_main : setJPEG.q_main, "JPEG/maxQuality")
 					}
 					RadioButton {
 						id        : jpg_lossy
 						height    : 32
-						text      : qsTr("Lossy")
-						checked   : setJPEG.qmax > 0
-						onClicked : _Colbi.setOptionInt("JPEG/maxQuality", jpg_max_quality.value)
-					}
-				}
-				Row {
-					y             : 175
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					Slider {
-						id             : jpg_max_quality
-						height         : 32
-						from           : 0
-						to             : 100
-						stepSize       : 1
-						enabled        : jpg_lossy.checked
-						value          : Math.abs(setJPEG.qmax)
-						onValueChanged : _Colbi.setOptionInt("JPEG/maxQuality", value)
+						text      : qsTr("Quality:")
+						checked   : setJPEG.q_main > 0
+						palette   : jpg_lossless.palette
+						contentItem: Text {
+							text  : parent.text
+							color : jpg_lossy.checked ? glTheme.textDefault : glTheme.inputBorder
+							font  { pixelSize : 16; italic: true }
+							verticalAlignment : Text.AlignVCenter
+							leftPadding       : parent.indicator.width + parent.spacing
+						}
+						onToggled : setCurRange(setJPEG.q_main < 0 ? -setJPEG.q_main : setJPEG.q_main, "JPEG/maxQuality")
 					}
 					Text {
-						height             : 32
-						color              : jpg_lossy.checked ? glTheme.textDefault : glTheme.inputBorder
-						text               : jpg_max_quality.value +"%"
-						font   { pixelSize : 18; italic: true }
+						height : 32
+						color  : jpg_lossy.checked ? glTheme.textDefault : glTheme.inputBorder
+						text   : Math.abs(setJPEG.q_main) +"%"
+						font   { pixelSize : 16; italic: true; bold: true }
 						verticalAlignment  : Text.AlignVCenter
 					}
 				}
@@ -354,11 +361,16 @@ ApplicationWindow {
 				id      : setPNG
 				visible : false
 
+				property int q_main : _Colbi.getParamInt("PNG/minQuality")
 				property var params : [{
 					_Param: "PNG/8bitColors",
 					_Title: qsTr("Convert all to 8bit pallete"),
 					_Check: _Colbi.getParamBool("PNG/8bitColors"),
 					_Swith: false
+				},,{
+					_Param : "PNG/minQuality",
+					_Value : q_main,
+					_Maxiv : 100
 				}]
 
 				Row {
@@ -368,32 +380,18 @@ ApplicationWindow {
 					anchors.left  : parent.left
 					Text {
 						height : 32
+						color  : glTheme.textDefault
 						text   : qsTr("Quantization quality:")
-						font   { pixelSize: 16; italic: true }
-						verticalAlignment : Text.AlignVCenter
-					}
-				}
-				Row {
-					y             : 175
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					Slider {
-						id             : png_min_quality
-						height         : 32
-						from           : 0
-						to             : 100
-						stepSize       : 1
-						snapMode       : Slider.SnapAlways
-						value          : _Colbi.getParamInt("PNG/minQuality")
-						onValueChanged : _Colbi.setOptionInt("PNG/minQuality", value)
+						font   { pixelSize : 16; italic: true }
+						verticalAlignment  : Text.AlignVCenter
 					}
 					Text {
 						height : 32
 						color  : glTheme.textDefault
-						text   : png_min_quality.value +"%"
-						font   { pixelSize: 18; italic: true }
-						verticalAlignment : Text.AlignVCenter
+						text   : setPNG.q_main +"%"
+						font   { pixelSize : 18; italic: true; bold: true }
+						leftPadding        : 10
+						verticalAlignment  : Text.AlignVCenter
 					}
 				}
 			}
@@ -401,6 +399,7 @@ ApplicationWindow {
 				id: setGIF
 				visible: false
 
+				property int q_main : _Colbi.getParamInt("GIF/maxColors")
 				property var params : [{
 					_Param: "GIF/reColor",
 					_Title: qsTr("Rebuild Colors"),
@@ -414,6 +413,10 @@ ApplicationWindow {
 					  "Noise", "3x3 Quads", "4x4 Quads", "8x8 Quads", "45 Deg. Lines",
 					  "64x64 Quads", "Square Halftone", "Triangle Halftone", "8x8 Halftone"
 					]
+				}, {
+					_Param : "GIF/maxColors",
+					_Value : q_main,
+					_Maxiv : 255
 				}]
 
 				Row {
@@ -421,69 +424,21 @@ ApplicationWindow {
 					height        : 40
 					anchors.right : parent.right
 					anchors.left  : parent.left
-					enabled       : setGIF.params[0]._Check
+					opacity       : g_Select.opacity
 					Text {
 						height : 32
-						text   : qsTr("Max Colors to Use:   ")
-						font   { pixelSize: 16; italic: true }
-						verticalAlignment : Text.AlignVCenter
+						text   : qsTr("Max Colors to Use:")
+						font   { pixelSize : 16; italic: true }
+						verticalAlignment  : Text.AlignVCenter
 					}
 					Text {
-						text: "< "; height  : 32; color: glTheme.textDefault
-						font   { pixelSize  : 16; bold :  true }
-						verticalAlignment   : Text.AlignVCenter
-						MouseArea {
-							anchors.fill    : parent
-							cursorShape     : Qt.PointingHandCursor
-							acceptedButtons : Qt.LeftButton
-							onClicked       : gif_max_colors.decrease()
-							onReleased      : { tim_h.running = false }
-							onPressAndHold  : { tim_h.interval &= ~1; tim_h.running = true }
-						}
-					}
-					Text {
-						text   : (gif_max_colors.value + 1).toString()
-						height : 32; width  : 32; color  : g_Select.enabled ? glTheme.textColorC : glTheme.inputBorder
-						font   { pixelSize  : 18; italic :  true }
-						verticalAlignment   : Text.AlignVCenter
-						horizontalAlignment : Text.AlignHCenter
-					}
-					Text {
-						text: " >"; height  : 32; color : glTheme.textDefault
-						font   { pixelSize  : 16; bold  : true }
-						verticalAlignment   : Text.AlignVCenter
-						MouseArea {
-							anchors.fill    : parent
-							cursorShape     : Qt.PointingHandCursor
-							acceptedButtons : Qt.LeftButton
-							onClicked       : gif_max_colors.increase()
-							onReleased      : { tim_h.running = false }
-							onPressAndHold  : { tim_h.interval |= 1; tim_h.running = true }
-						}
-					}
-					Timer {
-						id          : tim_h
-						interval    : 100
-						running     : false
-						repeat      : true
-						onTriggered : gif_max_colors[`${interval & 1 ? 'in' : 'de'}crease`]()
-					}
-				}
-				Row {
-					y             : 175
-					height        : 40
-					anchors.right : parent.right
-					anchors.left  : parent.left
-					Slider {
-						id             : gif_max_colors
-						height         : 32
-						from           : 1
-						to             : 255
-						stepSize       : 1
-						snapMode       : Slider.SnapAlways
-						enabled        : setGIF.params[0]._Check
-						value          : _Colbi.getParamInt("GIF/maxColors")
-						onValueChanged : _Colbi.setOptionInt("GIF/maxColors", value)
+						text   : (setGIF.q_main + 1).toString();
+						color  : glTheme.textDefault
+						height : 32; width : 32
+						font   { pixelSize : 18; italic : true; bold : true }
+						horizontalAlignment: Text.AlignHCenter
+						verticalAlignment: Text.AlignVCenter
+						leftPadding : 20
 					}
 				}
 				Rectangle {
@@ -517,11 +472,13 @@ ApplicationWindow {
 			Item {
 				id: setSVG
 				visible: false
+
+				property var params : []
 			}
 		}
 		Item {
-			id           : setConstruct
-			visible      : true
+			id      : setConstruct
+			visible : true
 
 			anchors {
 				fill: parent
@@ -529,11 +486,10 @@ ApplicationWindow {
 			}
 
 			Row {
-				id            : g_Checkx
-				y             : 20
-				height        : 40
-				anchors.left  : parent.left
-				anchors.right : parent.right
+				id      : g_Checkx
+				y       : 20
+				height  : 40
+				anchors { left: parent.left; right : parent.right }
 
 				property string _Param : setGeneral.params[0]._Param
 				property string _Title : setGeneral.params[0]._Title
@@ -586,13 +542,12 @@ ApplicationWindow {
 				}
 			}
 			Row {
-				id            : g_Select
-				y             : 75
-				height        : 40
-				anchors.right : parent.right
-				anchors.left  : parent.left
-				enabled       : g_Checkx._Swith ? g_Checkx._Check : true
-				opacity       : enabled ? 1 : .5
+				id      : g_Select
+				y       : 75
+				height  : 40
+				anchors { left: parent.left; right : parent.right }
+				enabled : g_Checkx._Swith ? g_Checkx._Check : true
+				opacity : enabled ? 1 : .5
 
 				property string _Param : setGeneral.params[1]._Param
 				property string _Title : setGeneral.params[1]._Title
@@ -673,6 +628,113 @@ ApplicationWindow {
 							color        : glTheme.inputFill
 							border.color : glTheme.inputBorder
 						}
+					}
+				}
+			}
+			Row {
+				id      : g_Range
+				y       : 175
+				height  : 40
+				anchors { left: parent.left; right : parent.right }
+				enabled : g_Select.enabled && g_Range._Value > 0
+				opacity : enabled ? 1 : .5
+				visible : false
+
+				property string _Param : ""
+				property int    _Value : 1
+				property int    _Maxiv : 1
+				property int    _Minov : 1
+
+				Slider {
+					id       : g_Range_slider
+					height   : 32
+					from     : g_Range._Minov
+					to       : g_Range._Maxiv
+					stepSize : 1
+					onVisualPositionChanged: {
+						if ( pressed && value !== g_Range._Value )
+							setCurRange(value);
+						/*setCurRange(Math.max(Math.floor(
+							g_Range._Maxiv * 0.01 * g_Range_slider.visualPosition * 100
+						),  g_Range._Minov));*/
+					}
+					onPressedChanged: {
+						if ( !pressed )
+							setCurRange(g_Range._Value, g_Range._Param);
+					}
+					background : Rectangle {
+						x      : g_Range_slider.leftPadding
+						y      : g_Range_slider.height / 2 - 2
+						width  : g_Range_slider.availableWidth
+						height : 4
+						radius : 2
+						color  : glTheme.inputFill
+
+						border.color   : glTheme.inputBorder
+						implicitWidth  : 200
+						implicitHeight : 4
+
+						Rectangle {
+							width  : Math.abs(g_Range._Value / g_Range._Maxiv) * parent.width
+							height : parent.height
+							radius : parent.radius
+							color  : glTheme.textDefault
+						}
+					}
+					handle: Rectangle {
+						x      : g_Range_slider.leftPadding + Math.abs(g_Range._Value / g_Range._Maxiv) * (g_Range_slider.availableWidth - width)
+						y      : g_Range_slider.topPadding + g_Range_slider.availableHeight / 2 - radius
+						color  : g_Range_slider.pressed ? glTheme.inputBorder : glTheme.inputFill
+						radius : 13
+
+						border.color   : glTheme.inputBorder
+						implicitWidth  : 26
+						implicitHeight : 26
+					}
+				}
+
+				Text {
+					padding: 5 ; text  : "<"
+					height : 32; color : glTheme.textDefault
+					font   { pixelSize : 16; bold: true }
+					verticalAlignment  : Text.AlignVCenter
+					MouseArea {
+						anchors.fill    : parent
+						cursorShape     : Qt.PointingHandCursor
+						acceptedButtons : Qt.LeftButton
+						onPressAndHold  : { g_Range_timr.interval &= ~1;  g_Range_timr.running = true }
+						onReleased      : { g_Range_timr.running = false; setCurRange(g_Range._Value, g_Range._Param) }
+						onClicked       : {
+							if (g_Range._Value > g_Range._Minov)
+								setCurRange(g_Range._Value - 1, g_Range._Param);
+						}
+					}
+				}
+				Text {
+					padding: 5 ; text  : ">"
+					height : 32; color : glTheme.textDefault
+					font   { pixelSize : 16; bold: true }
+					verticalAlignment  : Text.AlignVCenter
+					MouseArea {
+						anchors.fill    : parent
+						cursorShape     : Qt.PointingHandCursor
+						acceptedButtons : Qt.LeftButton
+						onPressAndHold  : { g_Range_timr.interval |= 1;   g_Range_timr.running = true }
+						onReleased      : { g_Range_timr.running = false; setCurRange(g_Range._Value, g_Range._Param) }
+						onClicked       : {
+							if (g_Range._Value < g_Range._Maxiv)
+								setCurRange(g_Range._Value + 1, g_Range._Param);
+						}
+					}
+				}
+				Timer {
+					id          : g_Range_timr
+					interval    : 100
+					running     : false
+					repeat      : true
+					onTriggered : {
+						const idc = interval & 1 ? (g_Range._Value < g_Range._Maxiv) : -(g_Range._Value > g_Range._Minov);
+						  if (idc) setCurRange(g_Range._Value + idc);
 					}
 				}
 			}
@@ -831,6 +893,12 @@ ApplicationWindow {
 		MenuItem { text: "Cancel"    ; onTriggered: _Colbi.killTask(taskMenu.num) }
 	}
 
+	function setCurRange(newVal, storeName) {
+		const curSet = setsGroup.children[ curIdx ];
+		if ( storeName )
+			_Colbi.setOptionInt(storeName, newVal);
+		g_Range._Value = curSet.q_main = curSet.params[2]._Value = newVal;
+	}
 	function switchPannel(newIdx) {
 		if (newIdx === curIdx)
 			return;
