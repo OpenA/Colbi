@@ -2,6 +2,20 @@
 const _PANNEL_BUTTON_W = 100;
 const _PANNEL_BUTTON_H = 42;
 
+const toPreferStr = (size = 0, rate = 0) => [`${
+	size < 1e3  ? size : // ~ 320 b
+	size < 1e4  ? Math.floor(size / 1e1) / 100 : // ~ 7.23  Kb
+	size < 1e6  ? Math.floor(size / 1e2) / 10  : // ~ 640.5 Kb
+	size < 1e7  ? Math.floor(size / 1e4) / 100 : // ~ 1.52  Mb
+	size < 1e9  ? Math.floor(size / 1e5) / 10  : // ~ 48.3  Mb
+	size < 1e11 ? Math.floor(size / 1e7) / 100 : // ~ 12.54 Gb
+	/* >= 100Gb */Math.floor(size / 1e8) / 10
+}`, `${
+	size < 1e3 ? '' : size < 1e6 ? 'K' : size < 1e9 ? 'M' : 'G'
+}b`, `${
+	!rate || rate === 100 ? Math.floor(rate) : Math.round(rate * (rate < 1 ? 100 : 10)) / (rate < 1 ? 100 : 10)
+}%`];
+
 const status_defaults = [
 	"transparent",
 	"darkcyan",

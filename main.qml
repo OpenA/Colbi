@@ -18,29 +18,23 @@ ApplicationWindow {
 
 	FontLoader { id: fonico; source: "lib/_Dist_/fonico.ttf" }
 
-	function bitsMagnitude(size) {
-		return (size < 1e3 ?  size +" b" :
-				size < 1e6 ? (size / 1e3).toFixed(1) +" Kb" :
-				size < 1e9 ? (size / 1e6).toFixed(1  + (size < 1e8 )) +" Mb" :
-							 (size / 1e9).toFixed(1  + (size < 1e11)) +" Gb");
-	}
-
 	Colbi {
 		id: _Colbi
 		onTaskAdded      : {
+			const [fileSize, sizeEx] = Themes.toPreferStr(file_size);
 			taskListModel.append({
 				fileName : file_name.length > 53 ? "..."+ file_name.slice(-50) : file_name,
-				fileSize : bitsMagnitude(file_size),
+				fileSize , sizeEx,
 				statID   : status,
 				compress : ""
 			});
 			_Colbi.runTask(num);
 		}
 		onTaskProgress   : {
-			var compress  = (orig_size - new_size) / (orig_size / 100), p = compress < 1;
-			var  task     = taskListModel.get(num);
-			task.fileSize = bitsMagnitude(new_size);
-			task.compress = compress.toFixed(1 + p).replace((p ? ".00" : ".0"), "") +"%";
+			const task = taskListModel.get(num);
+			[task.fileSize, task.sizeEx, task.compress] = Themes.toPreferStr(
+				new_size, (orig_size - new_size) / (orig_size / 100)
+			);
 		}
 		onStatusUpdate   : {
 			var task = taskListModel.get(num);
@@ -809,7 +803,7 @@ ApplicationWindow {
 						rightMargin : 35
 					}
 					Text {
-						text  : model.fileSize.substring(0, model.fileSize.indexOf(" "))
+						text  : model.fileSize
 						color : glTheme.textColorA
 						font  { family: "monospace"  }
 					}
@@ -822,7 +816,7 @@ ApplicationWindow {
 					}
 					Text {
 						width : 30
-						text  : model.fileSize.substring(model.fileSize.indexOf(" ") + 1)
+						text  : model.sizeEx
 						color : glTheme.textColorD
 						font  { family: "serif" }
 					}
@@ -899,6 +893,7 @@ ApplicationWindow {
 			_Colbi.setOptionInt(storeName, newVal);
 		g_Range._Value = curSet.q_main = curSet.params[2]._Value = newVal;
 	}
+
 	function switchPannel(newIdx) {
 		if (newIdx === curIdx)
 			return;
