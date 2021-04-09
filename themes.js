@@ -28,6 +28,7 @@ const status_defaults = [
 const light_cream = {
 	taskListBG  : ["floralwhite", "#feeddc"],
 	pannelBG    : "#fefefe",
+	pannelButton: "#777",
 
 	inputFill   : "whitesmoke",
 	inputBorder : "#ddd",
@@ -40,12 +41,13 @@ const light_cream = {
 	textColorC  : "#424242",
 	textColorD  : "#777",
 
-	status      : status_defaults
+	taskStatus  : status_defaults
 }
 
 const dark_mary = {
 	taskListBG  : ["#292929", "#353535"],
 	pannelBG    : "#853737",
+	pannelButton: "#150404",
 
 	textDefault : "#150404",
 	checkMark   : "X",
@@ -58,16 +60,30 @@ const dark_mary = {
 	textColorC  : "#ebe5d7",
 	textColorD  : "#999",
 
-	status      : status_defaults
+	taskStatus  : status_defaults
 }
 
-const dark_blue = {
-	background: ["#428929", "#846362"],
-	status: status_defaults
+const blue_ash = {
+	taskListBG  : ["#212830", "#2b333b"],
+	pannelBG    : "#273a56",
+	pannelButton: "#96a4a3",
+
+	textDefault : "#718f89",
+	checkMark   : "",
+
+	inputFill   : "#324354",
+	inputBorder : "#4b5b6b",
+
+	textColorA  : "#927908",
+	textColorB  : "#608660",
+	textColorC  : "#cecece",
+	textColorD  : "#617eb2",
+
+	taskStatus  : status_defaults
 }
 
 const _COLLECTION = [
 	light_cream,
 	dark_mary,
-	dark_blue
+	blue_ash
 ];

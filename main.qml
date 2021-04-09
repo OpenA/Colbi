@@ -57,7 +57,7 @@ ApplicationWindow {
 			height : 30; y : 8
 			Rectangle {
 				id           : addFilesBtn
-				color        : glTheme.textDefault
+				color        : glTheme.pannelButton
 				radius       :  5
 				opacity      : .6
 				anchors.fill : parent
@@ -83,7 +83,7 @@ ApplicationWindow {
 		anchors { right : parent.right; rightMargin : 8 }
 		Rectangle {
 			id           : toggleSettsBtn
-			color        : glTheme.textDefault
+			color        : glTheme.pannelButton
 			radius       :  5
 			opacity      : .6
 			anchors.fill : parent
@@ -106,7 +106,7 @@ ApplicationWindow {
 	Rectangle {
 		z       : 1
 		id      : sPannel
-		visible : true
+		visible : false
 		color   : glTheme.pannelBG
 		anchors.fill: parent
 
@@ -123,10 +123,10 @@ ApplicationWindow {
 				y      : 1
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : setGeneral.visible ? "transparent" : glTheme.textDefault
+				color  : setGeneral.visible ? "transparent" : glTheme.pannelButton
 				Text {
 					text  : qsTr("General")
-					color : setGeneral.visible ? glTheme.textDefault : glTheme.inputFill
+					color : setGeneral.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -140,10 +140,10 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H + 2
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : setJPEG.visible ? "transparent" : glTheme.textDefault
+				color  : setJPEG.visible ? "transparent" : glTheme.pannelButton
 				Text {
 					text  : qsTr("JPEG")
-					color : setJPEG.visible ? glTheme.textDefault : glTheme.inputFill
+					color : setJPEG.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -157,10 +157,10 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H * 2 + 3
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : setPNG.visible ? "transparent" : glTheme.textDefault
+				color  : setPNG.visible ? "transparent" : glTheme.pannelButton
 				Text {
 					text  : qsTr("PNG")
-					color : setPNG.visible ? glTheme.textDefault : glTheme.inputFill
+					color : setPNG.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -174,10 +174,10 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H * 3 + 4
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : setGIF.visible ? "transparent" : glTheme.textDefault
+				color  : setGIF.visible ? "transparent" : glTheme.pannelButton
 				Text {
 					text  : qsTr("GIF")
-					color : setGIF.visible ? glTheme.textDefault : glTheme.inputFill
+					color : setGIF.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -191,11 +191,11 @@ ApplicationWindow {
 				y      : Themes._PANNEL_BUTTON_H * 4 + 5
 				width  : Themes._PANNEL_BUTTON_W
 				height : Themes._PANNEL_BUTTON_H
-				color  : setSVG.visible ? "transparent" : glTheme.textDefault
-				visible: true
+				color  : setSVG.visible ? "transparent" : glTheme.pannelButton
+				visible: false
 				Text {
 					text  : qsTr("SVG")
-					color : setSVG.visible ? glTheme.textDefault : glTheme.inputFill
+					color : setSVG.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
 				}
@@ -227,7 +227,7 @@ ApplicationWindow {
 				}, {
 					_Param: "General/colorTheme",
 					_Title: qsTr("Color Theme:"),
-					_Model: ["Light Cream", "Dark Mary", "Dark Blue"],
+					_Model: ["Light Cream", "Dark Mary", "Blue Ash"],
 					_Index: (() => {
 						const thIdx = _Colbi.getParamInt("General/colorTheme");
 						glTheme = Themes._COLLECTION[thIdx];
@@ -256,7 +256,7 @@ ApplicationWindow {
 						color            : glTheme.textColorA
 						text             : _Colbi.getParamStr("General/namePattern")
 						onEditingFinished: _Colbi.setOptionStr("General/namePattern", text)
-						selectionColor   : "#55"+ glTheme.status[2].substr(1)
+						selectionColor   : "#55"+ glTheme.taskStatus[2].substr(1)
 						background       : Rectangle {
 							color        : glTheme.taskListBG[1]
 						}
@@ -297,7 +297,7 @@ ApplicationWindow {
 					_Title: qsTr("DCT Algorithm:"),
 					_Model: ["Huffman", "Arithmetic"],
 					_Index: _Colbi.getParamInt("JPEG/algorithm"),
-				},{
+				}, {
 					_Param : "JPEG/maxQuality",
 					_Value : q_main,
 					_Maxiv : 100
@@ -422,6 +422,7 @@ ApplicationWindow {
 					Text {
 						height : 32
 						text   : qsTr("Max Colors to Use:")
+						color  : glTheme.textDefault
 						font   { pixelSize : 16; italic: true }
 						verticalAlignment  : Text.AlignVCenter
 					}
@@ -761,7 +762,7 @@ ApplicationWindow {
 					y      : 1
 					height : 28
 					width  : 5
-					color  : glTheme.status[model.statID]
+					color  : glTheme.taskStatus[model.statID]
 				}
 				Column {
 					clip    : true
