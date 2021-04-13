@@ -208,17 +208,122 @@ auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
 	return ok;
 }
 
+// Функция чтения параметров из файла
+bool readTheme(QIODevice &device, QSettings::SettingsMap &map)
+{
+	// Проверка, что устройство открыто
+	if (!device.isOpen())
+		return false;
+	// Воспользуемся текстовым потоком чтения данных из файла
+	QTextStream inStream(&device);
+	// Текущая группа
+	QString group;
+	// Будем парсить каждую строку
+	for (int idx = 0; !inStream.atEnd();) {
+		// Получаем строку
+		QString line = inStream.readLine();
+		// Игнорируем пустую строку
+		if (line.isEmpty())
+			continue;
+		// Название группы заключено в квадратные скобки
+		if (line.front() == '[' && line.back() == ']') {
+			// Убираем символы скобок
+			group = line.mid(1, line.size() - 2);
+			idx   = 0;
+		} else if (!group.isEmpty()) {
+			// Cтрока с параметром ` Название : Значение `
+			if (line.contains(":")) {
+				// Вставляем в контейнер
+				map.insert(group +"/"+ QString(idx++), QVariant(line));
+			}
+		} // Игнорируем строку, если нет группы
+	}
+	return true;
+}
+
+bool writeTheme(QIODevice &device, const QSettings::SettingsMap &map)
+{
+	// Проверка, что устройство открыто
+	if (!device.isOpen())
+		return false;
+	// Переменная необходима, чтобы отделить группы
+	QString lastGroup;
+	// Воспользуемся текстовым потоком записи данных в файл
+	QTextStream outStream(&device);
+	// Проходим по каждому параметру
+	// (в контейнере они выставлены по алфавитному порядку)
+	for (const QString key : map.keys()) {
+		// Разделяем группу и название параметра по символу "/"
+		int sepi = key.indexOf("/");
+		if (sepi == -1) {
+			// Сюда можно вставить код записи параметров
+			// без группы (например, в дефолтную "Другие")
+			continue;
+		}
+		QString group = key.mid(0, sepi);
+		// Если группа отличается от предыдущей, то
+		// вставляется разделитель и начинается новая группа
+		if (group != lastGroup) {
+			// Пустая строка (разделитель) между группами.
+			if (!lastGroup.isEmpty())
+				outStream << endl;
+			outStream << QString("[%1]").arg(group) << endl;
+			lastGroup = group;
+		}
+		outStream << map.value(key).toString() << endl;
+	}
+	return true;
+}
+
+const QSettings::Format ThLFormat = QSettings::registerFormat(
+	  "ini", readTheme, writeTheme, Qt::CaseSensitive
+);
+
+auto Colbi::loadTheme( const QString th_name ) -> QStringList
+{
+	QSettings themes(ThLFormat, QSettings::UserScope, "Colbi", "themes");
+	QStringList out_list;
+	QString lastGroup;
+
+	for(QString key : themes.allKeys()) {
+		QString group  = key.mid(0, key.indexOf("/"));
+		if (lastGroup != group) {
+			if (!lastGroup.isEmpty())
+				out_list.push_back("");
+			out_list.push_back((lastGroup = group));
+		}
+		out_list.push_back(themes.value(key).toString());
+	}
+	return out_list;
+}
+
+void Colbi::saveTheme( const QString th_name, QStringList th_style )
+{
+	QSettings themes(ThLFormat, QSettings::UserScope, "Colbi", "themes");
+	const int count = th_style.length();
+	themes.beginGroup(th_name);
+	if (count > 0) {
+		for (int i = 0; i < count; i++) {
+			if (th_style[i].contains(":"))
+				themes.setValue(QString(i), th_style[i]);
+		}
+	} else
+		themes.remove("");
+	themes.endGroup();
+}
+
 int main(int argc, char *argv[])
 {
-   BOOL_Param["General/moveToTemp" ] = true;
-	INT_Param["General/colorTheme" ] = 0;
-	STR_Param["General/namePattern"] = "_optim_";
+   BOOL_Param["moveToTemp" ] = true;
+	INT_Param["colorTheme" ] = 0;
+	STR_Param["fileNameExt"] = "_optim_";
 
    BOOL_Param["JPEG/progressive"] = true;
 	INT_Param["JPEG/algorithm"  ] = 0;
 	INT_Param["JPEG/maxQuality" ] = -90;
 
-   BOOL_Param["PNG/8bitColors"] = true;
+   BOOL_Param["PNG/rgb8bit" ] = true;
+	INT_Param["PNG/compSpeed"] = -1;
 	INT_Param["PNG/minQuality"] = 100;
 
    BOOL_Param["GIF/reColor"] = false;
@@ -226,6 +331,10 @@ int main(int argc, char *argv[])
 	INT_Param["GIF/ditherPlan"] = 1;
 	 FP_Param["GIF/lossQuality"] = 0;
 
+	if (ThLFormat == QSettings::InvalidFormat) {
+		qCritical() << "Error create theme format";
+		return 0;
+	}
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
 	QGuiApplication app(argc, argv);

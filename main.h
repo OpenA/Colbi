@@ -92,6 +92,9 @@ public slots:
 	void waitTask ( const quint16 );
 	void killTask ( const quint16 );
 
+	QStringList loadTheme( const QString );
+	void        saveTheme( const QString, QStringList );
+
 	QString getParamStr ( const QString );
 	bool    getParamBool( const QString );
 	int     getParamInt ( const QString );

@@ -1,6 +1,6 @@
 ﻿import QtQuick 2.14
 import QtQuick.Controls 2.14
-import QtQuick.Dialogs 1.0
+import Qt.labs.platform 1.1
 import git.OpenA.Colbi 1.0
 import "themes.js" as Themes
 
@@ -12,7 +12,7 @@ ApplicationWindow {
 	visible : true
 
 	property int curIdx  : 0
-	property var glTheme : null
+	property var glTheme : Themes._StyleList[0]
 
 	color: glTheme.taskListBG[0]
 
@@ -25,7 +25,7 @@ ApplicationWindow {
 			taskListModel.append({
 				fileName : file_name.length > 53 ? "..."+ file_name.slice(-50) : file_name,
 				fileSize , sizeEx,
-				statID   : status,
+				statID   : Object.keys(Themes.default_stat)[status],
 				compress : ""
 			});
 			_Colbi.runTask(num);
@@ -37,8 +37,9 @@ ApplicationWindow {
 			);
 		}
 		onStatusUpdate   : {
-			var task = taskListModel.get(num);
-			if (!(task.statID = status)) {
+			const task = taskListModel.get(num);
+			task.statID = Object.keys(Themes.default_stat)[status]
+			if (!status) {
 				task.compress = "";
 			}
 		}
@@ -53,8 +54,8 @@ ApplicationWindow {
 		border  { color: glTheme.inputBorder; width: 2 }
 		anchors { right: parent.right; left: parent.left }
 		Item {
-			width  : 30; x : 8
-			height : 30; y : 8
+			width  : 30; x : Themes._MARGINS_
+			height : 30; y : Themes._MARGINS_
 			Rectangle {
 				id           : addFilesBtn
 				color        : glTheme.pannelButton
@@ -79,8 +80,8 @@ ApplicationWindow {
 	}
 	Item {
 		width   : 30; z : 2
-		height  : 30; y : 8
-		anchors { right : parent.right; rightMargin : 8 }
+		height  : 30; y : Themes._MARGINS_
+		anchors { right : parent.right; rightMargin : Themes._MARGINS_ }
 		Rectangle {
 			id           : toggleSettsBtn
 			color        : glTheme.pannelButton
@@ -213,27 +214,29 @@ ApplicationWindow {
 				fill: parent
 				leftMargin: Themes._PANNEL_BUTTON_W + 28
 			}
-
 			Item {
 				id           : setGeneral
 				visible      : true
 				anchors.fill : parent
 
 				property var params : [{
-					_Param: "General/moveToTemp",
+					_Param: "moveToTemp",
 					_Title: qsTr("Move originals to temporary dir"),
-					_Check: _Colbi.getParamBool("General/moveToTemp"),
+					_Check: _Colbi.getParamBool("moveToTemp"),
 					_Swith: false
-				}, {
-					_Param: "General/colorTheme",
-					_Title: qsTr("Color Theme:"),
-					_Model: ["Light Cream", "Dark Mary", "Blue Ash"],
-					_Index: (() => {
-						const thIdx = _Colbi.getParamInt("General/colorTheme");
-						glTheme = Themes._COLLECTION[thIdx];
-						return thIdx;
-					})()
-				}]
+				}, (() => {
+					const thIdx = _Colbi.getParamInt("colorTheme");
+
+							  Themes.parseAdd( _Colbi.loadTheme("") );
+					glTheme = Themes._StyleList[thIdx];
+
+					return {
+						_Param: "colorTheme",
+						_Title: qsTr("Color Theme:"),
+						_Model: Themes._NamesList,
+						_Index: thIdx
+					}
+				})()]
 
 				Row {
 					y       : 130
@@ -248,27 +251,40 @@ ApplicationWindow {
 						verticalAlignment : Text.AlignVCenter
 					}
 					TextField {
-						id               : g_name_pat
 						width            : 140
 						height           : 32
 						font { pixelSize : 18; italic: true }
 						selectByMouse    : true
 						color            : glTheme.textColorA
-						text             : _Colbi.getParamStr("General/namePattern")
-						onEditingFinished: _Colbi.setOptionStr("General/namePattern", text)
-						selectionColor   : "#55"+ glTheme.taskStatus[2].substr(1)
+						text             : _Colbi.getParamStr("fileNameExt")
+						selectionColor   : glTheme.selectColor
 						background       : Rectangle {
 							color        : glTheme.taskListBG[1]
+						}
+						onTextChanged    : {
+							if (_Ext === "\n") {
+								_Ext = text;
+							} else {
+								fin_timer.running = false;
+								if (_Ext !== text) {
+									fin_timer.doWork = _Func;
+									fin_timer.running = true;
+								}
+							}
+						}
+						property string _Ext : "\n"
+						property var   _Func : () => {
+							_Colbi.setOptionStr("fileNameExt", (_Ext = text))
 						}
 						MouseArea {
 							anchors.fill    : parent
 							cursorShape     : Qt.IBeamCursor
 							acceptedButtons : Qt.RightButton
 							hoverEnabled    : true
-							onClicked       : showCpyMenu(g_name_pat)
+							onClicked       : cpyMenu.showOn(parent);
 							onPressAndHold  : {
 								if (mouse.source === Qt.MouseEventNotSynthesized)
-									showCpyMenu(g_name_pat);
+									cpyMenu.showOn(parent);
 							}
 						}
 					}
@@ -357,7 +373,7 @@ ApplicationWindow {
 
 				property int q_main : _Colbi.getParamInt("PNG/minQuality")
 				property var params : [{
-					_Param: "PNG/8bitColors",
+					_Param: "PNG/rgb8bit",
 					_Title: qsTr("Convert all to 8bit pallete"),
 					_Check: _Colbi.getParamBool("PNG/8bitColors"),
 					_Swith: false
@@ -578,8 +594,8 @@ ApplicationWindow {
 							const target = setsGroup.children[ curIdx ].params[1];
 							if (target._Index !== index) {
 								_Colbi.setOptionInt(g_Select._Param, (target._Index = g_Select._Index = index));
-								if (g_Select._Param === "General/colorTheme")
-									glTheme = Themes._COLLECTION[index];
+								if (g_Select._Param === "colorTheme")
+									glTheme = Themes._StyleList[index];
 							}
 						}
 					}
@@ -729,8 +745,105 @@ ApplicationWindow {
 					repeat      : true
 					onTriggered : {
 						const idc = interval & 1 ? (g_Range._Value < g_Range._Maxiv) : -(g_Range._Value > g_Range._Minov);
-						  if (idc) setCurRange(g_Range._Value + idc);
+						if (idc) setCurRange(g_Range._Value + idc);
 					}
+				}
+			}
+		}
+
+		Item {
+			visible : setGeneral.visible
+			anchors {
+				fill        : parent
+				topMargin   : 75
+				leftMargin  : Themes._PANNEL_BUTTON_W + 28
+				rightMargin : Themes._MARGINS_
+				bottomMargin: Themes._MARGINS_
+			}
+			Rectangle {
+				id             : th_Editor
+				anchors.fill   : parent
+				implicitWidth  : g_Select.implicitWidth + 22
+				implicitHeight : 250
+				border.color   : glTheme.inputBorder
+				visible        : false
+				radius         : 5
+				color          : glTheme.taskListBG[1]
+
+				ScrollView {
+					anchors.fill       : parent
+					TextArea {
+						id             : th_TxtArea
+						color          : glTheme.textColorC
+						font { family  : 'monospace'; pixelSize : 16 }
+						selectionColor : glTheme.selectColor
+						selectByMouse  : true
+						onTextChanged  : {
+							fin_timer.running = false;
+							if (fin_timer.doWork !== _Func) {
+								fin_timer.doWork = _Func;
+							} else if (!visible) {
+								fin_timer.doWork = null;
+							} else if (/[\w]+\s*\:/.test(text))
+								fin_timer.running = true;
+						}
+						MouseArea {
+							anchors.fill    : parent
+							cursorShape     : Qt.IBeamCursor
+							acceptedButtons : Qt.RightButton
+							hoverEnabled    : true
+							onClicked       : cpyMenu.showOn(th_TxtArea)
+							onPressAndHold  : {
+								if (mouse.source === Qt.MouseEventNotSynthesized)
+									cpyMenu.showOn(th_TxtArea);
+							}
+						}
+						property bool _ModE : false
+						property var  _Func : () => {
+							glTheme = Themes.toObjFormat(text);
+						}
+					}
+				}
+			}
+			Rectangle {
+				x      : th_Editor.visible ? th_Editor.width - 35 : g_Select.implicitWidth + 5
+				y      : th_Editor.visible ? 5 : 2
+				width  : 30
+				height : 30
+				radius : 100
+				color  : th_AddBtn.pressed ? glTheme.inputBorder : (th_Editor.visible ? glTheme.taskListBG[0] : glTheme.inputFill)
+				Text {
+					color   : th_AddBtn.pressed ? glTheme.textColorC : (th_Editor.visible ? glTheme.textColorB : glTheme.textDefault)
+					text    : th_Editor.visible ? "V" : "+"
+					font    { pixelSize : 22; family: fonico.name }
+					anchors { right     : parent.right; left: parent.left }
+					horizontalAlignment : Text.AlignHCenter
+				}
+				MouseArea {
+					id           : th_AddBtn
+					anchors.fill : parent
+					onClicked    : toggleStyleEditor(false)
+				}
+			}
+			Rectangle {
+				x      : th_Editor.visible ? th_Editor.width - 35 : g_Select.implicitWidth + 10 + width
+				y      : th_Editor.visible ? height + 10 : 2
+				width  : 30
+				height : 30
+				radius : 100
+				visible: g_Select._Index > 2
+				color  : th_EditBtn.pressed ? glTheme.inputBorder : (th_Editor.visible ? glTheme.taskListBG[0] : glTheme.inputFill)
+				Text {
+					color   : th_EditBtn.pressed ? glTheme.textColorC : (th_Editor.visible ? glTheme.textColorA : glTheme.textDefault)
+					text    : th_Editor.visible  ? "X" : "E"
+					font    { pixelSize : 22; family: fonico.name }
+					anchors { right     : parent.right; left: parent.left }
+					horizontalAlignment : Text.AlignHCenter
+				}
+				MouseArea {
+					id           : th_EditBtn
+					anchors.fill : parent
+					onClicked    : toggleStyleEditor(true)
 				}
 			}
 		}
@@ -762,7 +875,7 @@ ApplicationWindow {
 					y      : 1
 					height : 28
 					width  : 5
-					color  : glTheme.taskStatus[model.statID]
+					color  : glTheme[model.statID]
 				}
 				Column {
 					clip    : true
@@ -825,10 +938,10 @@ ApplicationWindow {
 				MouseArea {
 					anchors.fill    : parent
 					acceptedButtons : Qt.RightButton
-					onClicked       : { taskMenu.num = index; taskMenu.popup() }
-					onPressAndHold  : { taskMenu.num = index;
+					onClicked       : taskMenu.showOn(index)
+					onPressAndHold  : {
 						if (mouse.source === Qt.MouseEventNotSynthesized)
-							taskMenu.popup()
+							taskMenu.showOn(index)
 					}
 				}
 			}
@@ -836,15 +949,13 @@ ApplicationWindow {
 	}
 
 	FileDialog {
-		id     : fileDialog
-		title  : "Please choose a files"
-		folder : shortcuts.home
-
-		selectMultiple: true
-		onRejected: { fileDialog.close(); }
-		onAccepted: { fileDialog.close();
-			makeTasks(fileDialog.fileUrls);
-		}
+		id         : fileDialog
+		title      : "Please choose a files"
+		folder     : StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
+		fileMode   : FileDialog.OpenFiles
+		options    : FileDialog.ReadOnly
+		onRejected : { fileDialog.close(); }
+		onAccepted : { fileDialog.close(); makeTasks(files); }
 	}
 
 	DropArea {
@@ -875,17 +986,42 @@ ApplicationWindow {
 
 	Menu {
 		id: cpyMenu
-		property var hook: null;
-		MenuItem { text: "Cut"  ; onTriggered: { cpyMenu.hook.cut()  ; cpyMenu.hook = null } }
-		MenuItem { text: "Copy" ; onTriggered: { cpyMenu.hook.copy() ; cpyMenu.hook = null } }
-		MenuItem { text: "Paste"; onTriggered: { cpyMenu.hook.paste(); cpyMenu.hook = null } }
+
+		property var editor : null
+		property var showOn : txtA => {
+			editor = txtA; open();
+		}
+		MenuItem {
+			text        : qsTr("C&ut")
+			shortcut    : StandardKey.Cut
+			onTriggered : cpyMenu.editor.cut()
+		}
+		MenuItem {
+			text        : qsTr("&Copy")
+			shortcut    : StandardKey.Copy
+			onTriggered : cpyMenu.editor.copy()
+		}
+		MenuItem {
+			text        : qsTr("&Paste")
+			shortcut    : StandardKey.Paste
+			onTriggered : cpyMenu.editor.paste()
+		}
 	}
 	Menu {
 		id: taskMenu
-		property int num: -1;
+
+		property int num    : -1
+		property var showOn : idx => { num = idx; open(); }
+
 		MenuItem { text: "Show Store"; onTriggered: console.log("ok") }
 		MenuItem { text: "Pause"     ; onTriggered: _Colbi.waitTask(taskMenu.num) }
 		MenuItem { text: "Cancel"    ; onTriggered: _Colbi.killTask(taskMenu.num) }
+	}
+	Timer {
+		id: fin_timer
+		interval: 1500
+		property var doWork : null
+		onTriggered: doWork()
 	}
 
 	function setCurRange(newVal, storeName) {
@@ -913,13 +1049,44 @@ ApplicationWindow {
 		nexSets.visible = true;
 	}
 
-	function showCpyMenu(txtArea) {
-		var start = txtArea.selectionStart,
-		      end = txtArea.selectionEnd,
-		      pos = txtArea.cursorPosition;
-		cpyMenu.hook = txtArea;
-		cpyMenu.popup();
-		txtArea.cursorPosition = pos;
-		txtArea.select(start,end);
+	function toggleStyleEditor(xfl) {
+
+		const gParams = setGeneral.params[1],
+			  gModel  = gParams._Model,
+			  gIdx    = gParams._Index,
+			 curStyle = Themes._StyleList[gIdx];
+
+		if ((th_Editor.visible ^= 1)) {
+			th_TxtArea.text = Themes.toTextFormat(curStyle, false);
+			th_TxtArea._ModE = xfl;
+		} else {
+			const th_style = th_TxtArea.text,
+				  is_modif = th_TxtArea._ModE,
+				 obj_style = Themes.toObjFormat(th_style);
+
+			if (xfl || !obj_style && !is_modif) {
+				glTheme = curStyle;
+			} else if (!obj_style && is_modif) {
+				let nidx = gModel.indexOf(curStyle.name);
+				if (nidx > 2) {
+					glTheme = Themes._StyleList[nidx - 1];
+							  Themes._StyleList.splice(nidx, 1);
+										  gModel.splice(nidx, 1);
+					g_Select._Index = gParams._Index = nidx - 1;
+					g_Select._Model = gModel;
+					_Colbi.saveTheme( curStyle.name, [] );
+				}
+			} else {
+				if (is_modif) {
+					Themes._StyleList[gIdx] = obj_style;
+				} else {
+					gParams._Index  = Themes._StyleList.push(obj_style) - 1;
+					g_Select._Index = gModel.push(obj_style.name) - 1;
+					g_Select._Model = gModel;
+				}
+				_Colbi.saveTheme( obj_style.name, th_style.split('\n') );
+			}
+			th_TxtArea.text = '';
+		}
 	}
 }
