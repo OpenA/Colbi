@@ -227,7 +227,7 @@ ApplicationWindow {
 				}, (() => {
 					const thIdx = _Colbi.getParamInt("colorTheme");
 
-							  Themes.parseAdd( _Colbi.loadTheme("") );
+							  Themes.collectFromArray( _Colbi.loadTheme("") );
 					glTheme = Themes._StyleList[thIdx];
 
 					return {
@@ -828,10 +828,10 @@ ApplicationWindow {
 			Rectangle {
 				x      : th_Editor.visible ? th_Editor.width - 35 : g_Select.implicitWidth + 10 + width
 				y      : th_Editor.visible ? height + 10 : 2
+				visible: th_Editor.visible || g_Select._Index > 2
 				width  : 30
 				height : 30
 				radius : 100
-				visible: g_Select._Index > 2
 				color  : th_EditBtn.pressed ? glTheme.inputBorder : (th_Editor.visible ? glTheme.taskListBG[0] : glTheme.inputFill)
 				Text {
 					color   : th_EditBtn.pressed ? glTheme.textColorC : (th_Editor.visible ? glTheme.textColorA : glTheme.textDefault)
@@ -1052,40 +1052,31 @@ ApplicationWindow {
 	function toggleStyleEditor(xfl) {
 
 		const gParams = setGeneral.params[1],
-			  gModel  = gParams._Model,
 			  gIdx    = gParams._Index,
+			 curName  = Themes._NamesList[gIdx],
 			 curStyle = Themes._StyleList[gIdx];
 
 		if ((th_Editor.visible ^= 1)) {
-			th_TxtArea.text = Themes.toTextFormat(curStyle, false);
+			th_TxtArea.text = Themes.toTextFormat(curStyle, xfl ? curName : '');
 			th_TxtArea._ModE = xfl;
+		} else if (xfl) {
+			glTheme = curStyle;
+			th_TxtArea.text = '';
 		} else {
 			const th_style = th_TxtArea.text,
 				  is_modif = th_TxtArea._ModE,
-				 obj_style = Themes.toObjFormat(th_style);
+				  up_index = Themes.collectFromText(th_style, is_modif ? gIdx : -1);
 
-			if (xfl || !obj_style && !is_modif) {
+			if (up_index !== -1) {
+				g_Select._Index = gParams._Index = up_index;
+				g_Select._Model = gParams._Model = Themes._NamesList;
+				glTheme = Themes._StyleList[up_index];
+				if (is_modif && gIdx !== up_index) {
+					_Colbi.saveTheme( curName, null );
+				} else
+					_Colbi.saveTheme( Themes._NamesList[up_index], th_style.split('\n') );
+			} else
 				glTheme = curStyle;
-			} else if (!obj_style && is_modif) {
-				let nidx = gModel.indexOf(curStyle.name);
-				if (nidx > 2) {
-					glTheme = Themes._StyleList[nidx - 1];
-							  Themes._StyleList.splice(nidx, 1);
-										  gModel.splice(nidx, 1);
-					g_Select._Index = gParams._Index = nidx - 1;
-					g_Select._Model = gModel;
-					_Colbi.saveTheme( curStyle.name, [] );
-				}
-			} else {
-				if (is_modif) {
-					Themes._StyleList[gIdx] = obj_style;
-				} else {
-					gParams._Index  = Themes._StyleList.push(obj_style) - 1;
-					g_Select._Index = gModel.push(obj_style.name) - 1;
-					g_Select._Model = gModel;
-				}
-				_Colbi.saveTheme( obj_style.name, th_style.split('\n') );
-			}
 			th_TxtArea.text = '';
 		}
 	}

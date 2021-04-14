@@ -1,4 +1,4 @@
-#include <QGuiApplication>
+﻿#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QStandardPaths>
 #include <QMimeDatabase>
@@ -208,63 +208,48 @@ auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
 	return ok;
 }
 
-// Функция чтения параметров из файла
 bool readTheme(QIODevice &device, QSettings::SettingsMap &map)
 {
-	// Проверка, что устройство открыто
 	if (!device.isOpen())
 		return false;
-	// Воспользуемся текстовым потоком чтения данных из файла
+
 	QTextStream inStream(&device);
-	// Текущая группа
 	QString group;
-	// Будем парсить каждую строку
+
 	for (int idx = 0; !inStream.atEnd();) {
-		// Получаем строку
+
 		QString line = inStream.readLine();
-		// Игнорируем пустую строку
 		if (line.isEmpty())
 			continue;
-		// Название группы заключено в квадратные скобки
 		if (line.front() == '[' && line.back() == ']') {
-			// Убираем символы скобок
 			group = line.mid(1, line.size() - 2);
 			idx   = 0;
-		} else if (!group.isEmpty()) {
-			// Cтрока с параметром ` Название : Значение `
+		}
+		else if (!group.isEmpty()) {
+
 			if (line.contains(":")) {
-				// Вставляем в контейнер
-				map.insert(group +"/"+ QString(idx++), QVariant(line));
+				map.insert(group +"/"+ QString::number(idx++), QVariant(line));
 			}
-		} // Игнорируем строку, если нет группы
+		}
 	}
 	return true;
 }
 
 bool writeTheme(QIODevice &device, const QSettings::SettingsMap &map)
 {
-	// Проверка, что устройство открыто
 	if (!device.isOpen())
 		return false;
-	// Переменная необходима, чтобы отделить группы
-	QString lastGroup;
-	// Воспользуемся текстовым потоком записи данных в файл
+
 	QTextStream outStream(&device);
-	// Проходим по каждому параметру
-	// (в контейнере они выставлены по алфавитному порядку)
+	QString lastGroup;
+
 	for (const QString key : map.keys()) {
-		// Разделяем группу и название параметра по символу "/"
+
 		int sepi = key.indexOf("/");
-		if (sepi == -1) {
-			// Сюда можно вставить код записи параметров
-			// без группы (например, в дефолтную "Другие")
-			continue;
-		}
-		QString group = key.mid(0, sepi);
-		// Если группа отличается от предыдущей, то
-		// вставляется разделитель и начинается новая группа
-		if (group != lastGroup) {
-			// Пустая строка (разделитель) между группами.
+		if (sepi == -1) continue;
+
+		QString group  = key.mid(0, sepi);
+		if (lastGroup != group) {
 			if (!lastGroup.isEmpty())
 				outStream << endl;
 			outStream << QString("[%1]").arg(group) << endl;
@@ -282,17 +267,35 @@ const QSettings::Format ThLFormat = QSettings::registerFormat(
 auto Colbi::loadTheme( const QString th_name ) -> QStringList
 {
 	QSettings themes(ThLFormat, QSettings::UserScope, "Colbi", "themes");
-	QStringList out_list;
-	QString lastGroup;
+	QStringList out_list, keys;
 
-	for(QString key : themes.allKeys()) {
-		QString group  = key.mid(0, key.indexOf("/"));
-		if (lastGroup != group) {
-			if (!lastGroup.isEmpty())
-				out_list.push_back("");
-			out_list.push_back((lastGroup = group));
+	if (!th_name.isEmpty()) {
+		themes.beginGroup(th_name);
+		keys = themes.childKeys();
+		if (!keys.isEmpty()) {
+			out_list.push_back(th_name);
+			for (int i = 0; i < keys.length(); i++) {
+				out_list.push_back(themes.value(QString::number(i)).toString());
+			}
 		}
-		out_list.push_back(themes.value(key).toString());
+		themes.endGroup();
+	} else
+	if (!(keys = themes.allKeys()).isEmpty()) {
+		QString lastGroup;
+
+		for (QString   key : keys) {
+
+			int sepi = key.indexOf("/");
+			if (sepi == -1) continue;
+
+			QString group  = key.mid(0, sepi);
+			if (lastGroup != group) {
+				if (!lastGroup.isEmpty())
+					out_list.push_back("");
+				out_list.push_back((lastGroup = group));
+			}
+			out_list.push_back(themes.value(key).toString());
+		}
 	}
 	return out_list;
 }
@@ -300,14 +303,20 @@ auto Colbi::loadTheme( const QString th_name ) -> QStringList
 void Colbi::saveTheme( const QString th_name, QStringList th_style )
 {
 	QSettings themes(ThLFormat, QSettings::UserScope, "Colbi", "themes");
-	const int count = th_style.length();
+	int idx = 0;
+
 	themes.beginGroup(th_name);
-	if (count > 0) {
-		for (int i = 0; i < count; i++) {
-			if (th_style[i].contains(":"))
-				themes.setValue(QString(i), th_style[i]);
+	if (!th_style.isEmpty()) {
+		int size = themes.childKeys().length();
+		for (QString line : th_style) {
+			if (line.contains(":")) {
+				themes.setValue(QString::number(idx++), QVariant(line));
+			}
 		}
-	} else
+		while (idx < size)
+			themes.remove(QString::number(size--));
+	}
+	if (idx == 0)
 		themes.remove("");
 	themes.endGroup();
 }

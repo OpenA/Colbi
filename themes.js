@@ -1,4 +1,4 @@
-
+﻿
 const _PANNEL_BUTTON_W = 100;
 const _PANNEL_BUTTON_H = 42;
 const _MARGINS_        = 8;
@@ -84,43 +84,45 @@ const blue_ash = Object.assign({
 }, default_stat);
 
 const _NamesList = ["Light Cream", "Dark Mary", "Blue Ash"];
-const _StyleList = [
-	light_cream,
-	dark_mary,
-	blue_ash
-];
+const _StyleList = [ light_cream ,  dark_mary,   blue_ash ];
 
-const toTextFormat = (obj_style = {}, new_name = false) => {
+const genSafeName = (name = '') => {
+	if(!name || name.length < 3)
+		name = 'MyTheme №1';
+	for (let i = 1; _NamesList.includes(name); i++)
+		name = name.replace(/(?:\s?\d+)?$/, ' '+ i.toString());
+	return name;
+}
 
-	const keys = Object.keys(obj_style), _PSTR_MAX = 12,
-		  nidx = keys.indexOf('name');
+const toTextFormat = (obj_style = {}, style_name = '') => {
 
-	if (nidx !== -1)
-		keys.splice(nidx, 1);
-	var out_txt = `[${
-		new_name || nidx === -1 ? 'MyTheme №'+ (_StyleList.length - 2) : obj_style.name
-	}]\n`;
-	for (const key of keys) {
+	const _PSTR_MAX = 12;
+
+	let out_txt = `[${ style_name || genSafeName() }]\n`;
+
+	for (const key in obj_style)
 		out_txt += key + ' '.repeat(_PSTR_MAX - key.length) +': '+ obj_style[key] +'\n';
-	}
 	return out_txt;
 }
 
 const toObjFormat = (txt_style = '') => {
 	if (!/[\w]+\s*\:/.test(txt_style))
 		return null;
-	const obj_style = {
-		name: (/\[\s*(.+)\s*\]/.exec(txt_style) || [,'MyTheme №'+ _StyleList.length])[1].trim()
-	};
+
+	const obj_style = {};
+	let has_params = false;
+
 	for (const line of txt_style.trim().split(/\s*\n\s*/g)) {
 		const [key, val] = line.split(/\s*\:\s*/);
-		if (key in blue_ash)
+		if (key in blue_ash) {
 			obj_style[key] = val.includes(',') ? val.split(/\s*\,\s*/g) : val;
+			has_params = true;
+		}
 	}
-	return obj_style;
+	return has_params ? obj_style : null;
 }
 
-const parseAdd = (arr_styles = []) => {
+const collectFromArray = (arr_styles = []) => {
 
 	let obj_style = null;
 
@@ -131,7 +133,7 @@ const parseAdd = (arr_styles = []) => {
 			continue;
 		}
 		if (!obj_style) {
-			_StyleList.push(( obj_style = { name: slot } ));
+			_StyleList.push(( obj_style = {} ));
 			_NamesList.push(slot);
 		} else {
 			const [key, val] = slot.split(/\s*\:\s*/);
@@ -139,4 +141,30 @@ const parseAdd = (arr_styles = []) => {
 				obj_style[key] = val.includes(',') ? val.split(/\s*\,\s*/g) : val;
 		}
 	}
+}
+
+const collectFromText = (txt_style = '', repl_idx = -1) => {
+
+	const obj_style = toObjFormat(txt_style);
+
+	if (!obj_style) {
+		if (repl_idx > 2) {
+			_StyleList.splice(repl_idx, 1);
+			_NamesList.splice(repl_idx, 1);
+			return repl_idx - 1;
+		}
+		return -1;
+	}
+	let m    = /\[\s*(.+)\s*\]/.exec(txt_style),
+		name = m ? m[1].trim() : '';
+
+	if (repl_idx > 2) {
+		if (name !== _NamesList[repl_idx])
+			_NamesList[repl_idx] = genSafeName(name);
+		Object.assign( _StyleList[repl_idx], obj_style );
+	} else {
+		repl_idx = _StyleList.push( obj_style ) - 1;
+				   _NamesList.push( genSafeName(name) );
+	}
+	return repl_idx;
 }
