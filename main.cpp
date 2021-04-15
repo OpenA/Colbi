@@ -11,7 +11,7 @@
 QMap<QString, QString> STR_Param;
 QMap<QString, bool>   BOOL_Param;
 QMap<QString, int>     INT_Param;
-QMap<QString, float>    FP_Param;
+QMap<QString, double>   FP_Param;
 
 const QDir SAVE_ORI_DIR = QDir( QStandardPaths::writableLocation(QStandardPaths::TempLocation) +"/Colbi~saveOriginals" );
 const bool SYS_CASE_INS = SAVE_ORI_DIR.exists(QDir::homePath().toUpper());
@@ -69,7 +69,7 @@ Colbi::Colbi(QObject *parent) : QObject(parent)
 	}
 	for (QString key : FP_Param.keys()) {
 		if (m_settings->contains(key))
-			FP_Param[key] = m_settings->value(key).toFloat();
+			FP_Param[key] = m_settings->value(key).toReal();
 	}
 }
 Colbi::~Colbi() {
@@ -81,12 +81,12 @@ Colbi::~Colbi() {
 auto Colbi::getParamStr  ( const QString key ) -> QString { return  STR_Param[key]; }
 auto Colbi::getParamBool ( const QString key ) -> bool    { return BOOL_Param[key]; }
 auto Colbi::getParamInt  ( const QString key ) -> int     { return  INT_Param[key]; }
-auto Colbi::getParamReal ( const QString key ) -> float   { return   FP_Param[key]; }
+auto Colbi::getParamReal ( const QString key ) -> double  { return   FP_Param[key]; }
 
 void Colbi::setOptionStr ( const QString key, QString str ) { m_settings->setValue(key,  (STR_Param[key] = str));    }
 void Colbi::setOptionBool( const QString key, bool flag   ) { m_settings->setValue(key, (BOOL_Param[key] = flag));   }
 void Colbi::setOptionInt ( const QString key, int number  ) { m_settings->setValue(key,  (INT_Param[key] = number)); }
-void Colbi::setOptionReal( const QString key, float real  ) { m_settings->setValue(key,   (FP_Param[key] = real));   }
+void Colbi::setOptionReal( const QString key, double real ) { m_settings->setValue(key,   (FP_Param[key] = real));   }
 
 auto Colbi::event(QEvent *event) -> bool {
 
@@ -125,7 +125,7 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 		);
 	} else if (mime.inherits("image/gif")) {
 		taskList.append(
-			new GifWrk( this, num, size, INT_Param["GIF/maxColors"], BOOL_Param["GIF/reColor"], INT_Param["GIF/ditherPlan"], FP_Param["GIF/lossQuality"])
+			new GifWrk( this, num, size, INT_Param["GIF/maxColors"] - 1, BOOL_Param["GIF/reColor"], INT_Param["GIF/ditherPlan"], FP_Param["GIF/lossQuality"])
 		);
 	} else {
 		taskList.append( new TWrk );
@@ -324,7 +324,7 @@ void Colbi::saveTheme( const QString th_name, QStringList th_style )
 int main(int argc, char *argv[])
 {
    BOOL_Param["moveToTemp" ] = true;
-	INT_Param["colorTheme" ] = 0;
+	STR_Param["colorTheme" ] = "Light Cream";
 	STR_Param["fileNameExt"] = "_optim_";
 
    BOOL_Param["JPEG/progressive"] = true;
@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
 	INT_Param["PNG/minQuality"] = 100;
 
    BOOL_Param["GIF/reColor"] = false;
-	INT_Param["GIF/maxColors"] = 255;
+	INT_Param["GIF/maxColors"] = 256;
 	INT_Param["GIF/ditherPlan"] = 1;
 	 FP_Param["GIF/lossQuality"] = 0;
 

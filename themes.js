@@ -2,6 +2,7 @@
 const _PANNEL_BUTTON_W = 100;
 const _PANNEL_BUTTON_H = 42;
 const _MARGINS_        = 8;
+const _EMBEDS_COUNT    = 3;
 
 const toPreferStr = (size = 0, rate = 0) => [`${
 	size < 1e3  ? size : // ~ 320 b
@@ -122,7 +123,7 @@ const toObjFormat = (txt_style = '') => {
 	return has_params ? out_obj : null;
 }
 
-const collectFromArray = (arr_styles = []) => {
+const collectFromArray = (arr_styles = [], name = '') => {
 
 	let obj_style = null;
 
@@ -141,6 +142,7 @@ const collectFromArray = (arr_styles = []) => {
 				obj_style[key] = val.includes(',') ? val.split(/\s*\,\s*/g) : val;
 		}
 	}
+	return _StyleList[Math.max(0, _NamesList.indexOf(name))];
 }
 
 const collectFromText = (txt_style = '', repl_idx = -1) => {
@@ -148,7 +150,7 @@ const collectFromText = (txt_style = '', repl_idx = -1) => {
 	const obj_style = toObjFormat(txt_style);
 
 	if (!obj_style) {
-		if (repl_idx > 2) {
+		if (repl_idx >= _EMBEDS_COUNT) {
 			_StyleList.splice(repl_idx, 1);
 			_NamesList.splice(repl_idx, 1);
 			return repl_idx - 1;
@@ -158,7 +160,7 @@ const collectFromText = (txt_style = '', repl_idx = -1) => {
 	let m    = /\[\s*(.+)\s*\]/.exec(txt_style),
 		name = m ? m[1].trim() : '';
 
-	if (repl_idx > 2) {
+	if (repl_idx >= _EMBEDS_COUNT) {
 		if (name !== _NamesList[repl_idx])
 			_NamesList[repl_idx] = genSafeName(name);
 		_StyleList[repl_idx] = obj_style;

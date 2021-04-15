@@ -98,12 +98,12 @@ public slots:
 	QString getParamStr ( const QString );
 	bool    getParamBool( const QString );
 	int     getParamInt ( const QString );
-	float   getParamReal( const QString );
+	double  getParamReal( const QString );
 
 	void setOptionStr ( const QString, QString );
 	void setOptionBool( const QString, bool    );
 	void setOptionInt ( const QString, int     );
-	void setOptionReal( const QString, float   );
+	void setOptionReal( const QString, double  );
 };
 
 /* Image Worker Base Class */

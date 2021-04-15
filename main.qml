@@ -12,7 +12,10 @@ ApplicationWindow {
 	visible : true
 
 	property int curIdx  : 0
-	property var glTheme : Themes._StyleList[0]
+	property var glTheme : Themes.collectFromArray(
+		_Colbi.loadTheme(""),
+		_Colbi.getParamStr("colorTheme")
+	);
 
 	color: glTheme.taskListBG[0]
 
@@ -208,7 +211,7 @@ ApplicationWindow {
 		}
 
 		Item {
-			id: setsGroup
+			id: optsGroup
 
 			anchors {
 				fill: parent
@@ -218,25 +221,6 @@ ApplicationWindow {
 				id           : setGeneral
 				visible      : true
 				anchors.fill : parent
-
-				property var params : [{
-					_Param: "moveToTemp",
-					_Title: qsTr("Move originals to temporary dir"),
-					_Check: _Colbi.getParamBool("moveToTemp"),
-					_Swith: false
-				}, (() => {
-					const thIdx = _Colbi.getParamInt("colorTheme");
-
-							  Themes.collectFromArray( _Colbi.loadTheme("") );
-					glTheme = Themes._StyleList[thIdx];
-
-					return {
-						_Param: "colorTheme",
-						_Title: qsTr("Color Theme:"),
-						_Model: Themes._NamesList,
-						_Index: thIdx
-					}
-				})()]
 
 				Row {
 					y       : 130
@@ -302,22 +286,7 @@ ApplicationWindow {
 				visible      : false
 				anchors.fill : parent
 
-				property var q_main : _Colbi.getParamInt("JPEG/maxQuality")
-				property var params : [{
-					_Param: "JPEG/progressive",
-					_Title: qsTr("Progressive"),
-					_Check: _Colbi.getParamBool("JPEG/progressive"),
-					_Swith: false
-				}, {
-					_Param: "JPEG/algorithm",
-					_Title: qsTr("DCT Algorithm:"),
-					_Model: ["Huffman", "Arithmetic"],
-					_Index: _Colbi.getParamInt("JPEG/algorithm"),
-				}, {
-					_Param : "JPEG/maxQuality",
-					_Value : q_main,
-					_Maxiv : 100
-				}]
+				property var irate: _Colbi.getParamInt("JPEG/maxQuality")
 
 				Row {
 					y             : 130
@@ -329,7 +298,7 @@ ApplicationWindow {
 						id        : jpg_lossless
 						height    : 32
 						text      : qsTr("Lossless")
-						checked   : setJPEG.q_main < 0
+						checked   : setJPEG.irate < 0
 						palette   {
 							base : glTheme.inputFill;  light : glTheme.inputBorder
 							mid  : glTheme.inputBorder; text : glTheme.textDefault
@@ -341,13 +310,13 @@ ApplicationWindow {
 							verticalAlignment : Text.AlignVCenter
 							leftPadding       : parent.indicator.width + parent.spacing
 						}
-						onToggled : setCurRange(setJPEG.q_main > 0 ? -setJPEG.q_main : setJPEG.q_main, "JPEG/maxQuality")
+						onToggled : setCurRange(setJPEG.irate > 0 ? -setJPEG.irate : setJPEG.irate, true)
 					}
 					RadioButton {
 						id        : jpg_lossy
 						height    : 32
 						text      : qsTr("Quality:")
-						checked   : setJPEG.q_main > 0
+						checked   : setJPEG.irate > 0
 						palette   : jpg_lossless.palette
 						contentItem: Text {
 							text  : parent.text
@@ -356,12 +325,12 @@ ApplicationWindow {
 							verticalAlignment : Text.AlignVCenter
 							leftPadding       : parent.indicator.width + parent.spacing
 						}
-						onToggled : setCurRange(setJPEG.q_main < 0 ? -setJPEG.q_main : setJPEG.q_main, "JPEG/maxQuality")
+						onToggled : setCurRange(setJPEG.irate < 0 ? -setJPEG.irate : setJPEG.irate, true)
 					}
 					Text {
 						height : 32
 						color  : jpg_lossy.checked ? glTheme.textDefault : glTheme.inputBorder
-						text   : Math.abs(setJPEG.q_main) +"%"
+						text   : Math.abs(setJPEG.irate) +"%"
 						font   { pixelSize : 16; italic: true; bold: true }
 						verticalAlignment  : Text.AlignVCenter
 					}
@@ -371,17 +340,7 @@ ApplicationWindow {
 				id      : setPNG
 				visible : false
 
-				property int q_main : _Colbi.getParamInt("PNG/minQuality")
-				property var params : [{
-					_Param: "PNG/rgb8bit",
-					_Title: qsTr("Convert all to 8bit pallete"),
-					_Check: _Colbi.getParamBool("PNG/8bitColors"),
-					_Swith: false
-				},,{
-					_Param : "PNG/minQuality",
-					_Value : q_main,
-					_Maxiv : 100
-				}]
+				property int irate : _Colbi.getParamInt("PNG/minQuality")
 
 				Row {
 					y             : 140
@@ -398,7 +357,7 @@ ApplicationWindow {
 					Text {
 						height : 32
 						color  : glTheme.textDefault
-						text   : setPNG.q_main +"%"
+						text   : setPNG.irate +"%"
 						font   { pixelSize : 18; italic: true; bold: true }
 						leftPadding        : 10
 						verticalAlignment  : Text.AlignVCenter
@@ -409,25 +368,7 @@ ApplicationWindow {
 				id: setGIF
 				visible: false
 
-				property int q_main : _Colbi.getParamInt("GIF/maxColors")
-				property var params : [{
-					_Param: "GIF/reColor",
-					_Title: qsTr("Rebuild Colors"),
-					_Check: _Colbi.getParamBool("GIF/reColor"),
-					_Swith: true
-				}, {
-					_Param: "GIF/ditherPlan",
-					_Title: qsTr("Dithering:"),
-					_Index: _Colbi.getParamInt("GIF/ditherPlan"),
-					_Model: [
-					  "Noise", "3x3 Quads", "4x4 Quads", "8x8 Quads", "45 Deg. Lines",
-					  "64x64 Quads", "Square Halftone", "Triangle Halftone", "8x8 Halftone"
-					]
-				}, {
-					_Param : "GIF/maxColors",
-					_Value : q_main,
-					_Maxiv : 255
-				}]
+				property int irate : _Colbi.getParamInt("GIF/maxColors")
 
 				Row {
 					y             : 140
@@ -443,7 +384,7 @@ ApplicationWindow {
 						verticalAlignment  : Text.AlignVCenter
 					}
 					Text {
-						text   : (setGIF.q_main + 1).toString();
+						text   : setGIF.irate
 						color  : glTheme.textDefault
 						height : 32; width : 32
 						font   { pixelSize : 18; italic : true; bold : true }
@@ -474,7 +415,10 @@ ApplicationWindow {
 						stepSize       : 0.05
 						snapMode       : Dial.SnapOnRelease
 						value          : _Colbi.getParamReal("GIF/lossQuality")
-						onValueChanged : _Colbi.setOptionReal("GIF/lossQuality", value)
+						onPressedChanged : {
+							if ( !pressed )
+								_Colbi.setOptionReal("GIF/lossQuality", Math.round(value * 100) / 100);
+						}
 						palette { dark : glTheme.textDefault }
 						anchors.fill   : parent
 					}
@@ -502,19 +446,14 @@ ApplicationWindow {
 				height  : 40
 				anchors { left: parent.left; right : parent.right }
 
-				property string _Param : setGeneral.params[0]._Param
-				property string _Title : setGeneral.params[0]._Title
-				property bool   _Check : setGeneral.params[0]._Check
-				property bool   _Swith : setGeneral.params[0]._Swith
+				property string _Title : glParams[0][0]._Title
+				property bool   _Check : glParams[0][0]._Check
+				property bool   _Swith : glParams[0][0]._Swith
 
 				AbstractButton {
 					padding    : 6
 					spacing    : 6
-					onClicked  : {
-						g_Checkx._Check ^= 1;
-						setsGroup.children[ curIdx ].params[0]._Check = g_Checkx._Check;
-						_Colbi.setOptionBool(g_Checkx._Param, g_Checkx._Check);
-					}
+					onClicked  : { glParams[ curIdx ][0]._Check = (g_Checkx._Check ^= 1) }
 					indicator  : Rectangle {
 						implicitHeight : 26
 						implicitWidth  : g_Checkx._Swith ? 48 : 26
@@ -560,10 +499,9 @@ ApplicationWindow {
 				enabled : g_Checkx._Swith ? g_Checkx._Check : true
 				opacity : enabled ? 1 : .5
 
-				property string _Param : setGeneral.params[1]._Param
-				property string _Title : setGeneral.params[1]._Title
-				property var    _Model : setGeneral.params[1]._Model
-				property int    _Index : setGeneral.params[1]._Index
+				property string _Title : glParams[0][1]._Title
+				property var    _Model : glParams[0][1]._Model
+				property int    _Index : glParams[0][1]._Index
 
 				Text {
 					height: 32
@@ -591,11 +529,9 @@ ApplicationWindow {
 							opacity : 0.75
 						}
 						onClicked : {
-							const target = setsGroup.children[ curIdx ].params[1];
+							const target = glParams[ curIdx ][1];
 							if (target._Index !== index) {
-								_Colbi.setOptionInt(g_Select._Param, (target._Index = g_Select._Index = index));
-								if (g_Select._Param === "colorTheme")
-									glTheme = Themes._StyleList[index];
+								target._Index = g_Select._Index = index;
 							}
 						}
 					}
@@ -651,10 +587,9 @@ ApplicationWindow {
 				opacity : enabled ? 1 : .5
 				visible : false
 
-				property string _Param : ""
-				property int    _Value : 1
-				property int    _Maxiv : 1
-				property int    _Minov : 1
+				property int _Value : 1
+				property int _Maxiv : 1
+				property int _Minov : 1
 
 				Slider {
 					id       : g_Range_slider
@@ -671,7 +606,7 @@ ApplicationWindow {
 					}
 					onPressedChanged: {
 						if ( !pressed )
-							setCurRange(g_Range._Value, g_Range._Param);
+							setCurRange(g_Range._Value, true);
 					}
 					background : Rectangle {
 						x      : g_Range_slider.leftPadding
@@ -714,10 +649,10 @@ ApplicationWindow {
 						cursorShape     : Qt.PointingHandCursor
 						acceptedButtons : Qt.LeftButton
 						onPressAndHold  : { g_Range_timr.interval &= ~1;  g_Range_timr.running = true }
-						onReleased      : { g_Range_timr.running = false; setCurRange(g_Range._Value, g_Range._Param) }
+						onReleased      : { g_Range_timr.running = false; setCurRange(g_Range._Value, true) }
 						onClicked       : {
 							if (g_Range._Value > g_Range._Minov)
-								setCurRange(g_Range._Value - 1, g_Range._Param);
+								setCurRange(g_Range._Value - 1, true);
 						}
 					}
 				}
@@ -731,10 +666,10 @@ ApplicationWindow {
 						cursorShape     : Qt.PointingHandCursor
 						acceptedButtons : Qt.LeftButton
 						onPressAndHold  : { g_Range_timr.interval |= 1;   g_Range_timr.running = true }
-						onReleased      : { g_Range_timr.running = false; setCurRange(g_Range._Value, g_Range._Param) }
+						onReleased      : { g_Range_timr.running = false; setCurRange(g_Range._Value, true) }
 						onClicked       : {
 							if (g_Range._Value < g_Range._Maxiv)
-								setCurRange(g_Range._Value + 1, g_Range._Param);
+								setCurRange(g_Range._Value + 1, true);
 						}
 					}
 				}
@@ -815,9 +750,8 @@ ApplicationWindow {
 				Text {
 					color   : th_AddBtn.pressed ? glTheme.textColorC : (th_Editor.visible ? glTheme.textColorB : glTheme.textDefault)
 					text    : th_Editor.visible ? "V" : "+"
-					font    { pixelSize : 22; family: fonico.name }
-					anchors { right     : parent.right; left: parent.left }
-					horizontalAlignment : Text.AlignHCenter
+					font    { pixelSize : 18; family: fonico.name }
+					anchors { centerIn  : parent }
 				}
 				MouseArea {
 					id           : th_AddBtn
@@ -828,7 +762,7 @@ ApplicationWindow {
 			Rectangle {
 				x      : th_Editor.visible ? th_Editor.width - 35 : g_Select.implicitWidth + 10 + width
 				y      : th_Editor.visible ? height + 10 : 2
-				visible: th_Editor.visible || g_Select._Index > 2
+				visible: th_Editor.visible || g_Select._Index >= Themes._EMBEDS_COUNT
 				width  : 30
 				height : 30
 				radius : 100
@@ -836,9 +770,8 @@ ApplicationWindow {
 				Text {
 					color   : th_EditBtn.pressed ? glTheme.textColorC : (th_Editor.visible ? glTheme.textColorA : glTheme.textDefault)
 					text    : th_Editor.visible  ? "X" : "E"
-					font    { pixelSize : 22; family: fonico.name }
-					anchors { right     : parent.right; left: parent.left }
-					horizontalAlignment : Text.AlignHCenter
+					font    { pixelSize : 18; family: fonico.name }
+					anchors { centerIn  : parent }
 				}
 				MouseArea {
 					id           : th_EditBtn
@@ -1024,23 +957,81 @@ ApplicationWindow {
 		onTriggered: doWork()
 	}
 
-	function setCurRange(newVal, storeName) {
-		const curSet = setsGroup.children[ curIdx ];
-		if ( storeName )
-			_Colbi.setOptionInt(storeName, newVal);
-		g_Range._Value = curSet.q_main = curSet.params[2]._Value = newVal;
+	property var glParams : [
+		[/* Global Opts - 0 */ {
+			get _Title() { return qsTr("Move originals to temporary dir") },
+			get _Swith() { return false },
+			get _Check() { return _Colbi.getParamBool("moveToTemp") },
+			set _Check(flag) {   _Colbi.setOptionBool("moveToTemp", flag) }
+		}, {
+			get _Title() { return qsTr("Color Theme:") },
+			get _Model() { return Themes._NamesList },
+			get _Index() { return Themes._NamesList.indexOf(_Colbi.getParamStr("colorTheme")) },
+			set _Index(num) {     _Colbi.setOptionStr("colorTheme", Themes._NamesList[num]);
+				glTheme = Themes._StyleList[num];
+			}
+		}],
+		[/* JPEG Opts - 1 */ {
+			get _Title() { return qsTr("Progressive") },
+			get _Swith() { return false },
+			get _Check() { return _Colbi.getParamBool("JPEG/progressive") },
+			set _Check(flag) {   _Colbi.setOptionBool("JPEG/progressive", flag) }
+		}, {
+			get _Title() { return qsTr("DCT Algorithm:") },
+			get _Model() { return ["Huffman", "Arithmetic"] },
+			get _Index() { return  _Colbi.getParamInt("JPEG/algorithm") },
+			set _Index(num) {     _Colbi.setOptionInt("JPEG/algorithm", num) }
+		}, {
+			get _Maxiv() { return 100 },
+			get _Value() { return  _Colbi.getParamInt("JPEG/maxQuality") },
+			set _Value(rate) {   _Colbi.setOptionInt("JPEG/maxQuality", rate) }
+		}],
+		[/* PNG Opts - 2 */ {
+			get _Title() { return qsTr("Convert all to 8bit pallete") },
+			get _Swith() { return false },
+			get _Check() { return _Colbi.getParamBool("PNG/rgb8bit") },
+			set _Check(flag) {   _Colbi.setOptionBool("PNG/rgb8bit", flag) }
+		},,{
+			get _Maxiv() { return 100 },
+			get _Value() { return  _Colbi.getParamInt("PNG/minQuality") },
+			set _Value(rate) {    _Colbi.setOptionInt("PNG/minQuality", rate) }
+		}],
+		[/* GIF Opts - 3 */ {
+			get _Title() { return qsTr("Rebuild Colors") },
+			get _Swith() { return true },
+			get _Check() { return _Colbi.getParamBool("GIF/reColor") },
+			set _Check(flag) {   _Colbi.setOptionBool("GIF/reColor", flag) }
+		}, {
+			get _Title() { return qsTr("Dithering:") },
+			get _Model() { return [
+			  "Noise", "3x3 Quads", "4x4 Quads", "8x8 Quads", "45 Deg. Lines",
+			  "64x64 Quads", "Square Halftone", "Triangle Halftone", "8x8 Halftone"]},
+			get _Index() { return  _Colbi.getParamInt("GIF/ditherPlan") },
+			set _Index(num) {     _Colbi.setOptionInt("GIF/ditherPlan", num) }
+		 }, {
+			get _Maxiv() { return 256 },
+			get _Minov() { return 2   },
+			get _Value() { return  _Colbi.getParamInt("GIF/maxColors") },
+			set _Value(rate) {    _Colbi.setOptionInt("GIF/maxColors", rate) }
+		}]
+	]
+
+	function setCurRange(newVal, store = false) {
+		if ( store )
+			glParams[ curIdx ][2]._Value = newVal;
+		optsGroup.children[ curIdx ].irate = g_Range._Value = newVal;
 	}
 
 	function switchPannel(newIdx) {
 		if (newIdx === curIdx)
 			return;
-		const oldSets = setsGroup.children[ curIdx ];
-		const nexSets = setsGroup.children[ newIdx ];
+		const oldSets = optsGroup.children[ curIdx ];
+		const nexSets = optsGroup.children[ newIdx ];
 		curIdx = newIdx;
 
 		for (let i = 0; i < setConstruct.children.length; i++) {
 			const row = setConstruct.children[i];
-			const params = nexSets.params[i];
+			const params = glParams[ curIdx ][i];
 			if ((row.visible = Boolean(params))) {
 				Object.assign(row, params);
 			}
@@ -1051,8 +1042,7 @@ ApplicationWindow {
 
 	function toggleStyleEditor(xfl) {
 
-		const gParams = setGeneral.params[1],
-			  gIdx    = gParams._Index,
+		const gIdx    = glParams[0][1]._Index,
 			 curName  = Themes._NamesList[gIdx],
 			 curStyle = Themes._StyleList[gIdx];
 
@@ -1068,9 +1058,9 @@ ApplicationWindow {
 				  up_index = Themes.collectFromText(th_style, is_modif ? gIdx : -1);
 
 			if (up_index !== -1) {
-				g_Select._Index = gParams._Index = up_index;
-				g_Select._Model = gParams._Model = Themes._NamesList;
-				glTheme = Themes._StyleList[up_index];
+				g_Select._Model = Themes._NamesList;
+						glTheme = Themes._StyleList[up_index];
+				g_Select._Index = glParams[0][1]._Index = up_index;
 				if (is_modif)
 					_Colbi.saveTheme( curName, [] );
 				if (!is_modif || gIdx === up_index)
