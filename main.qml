@@ -780,8 +780,8 @@ ApplicationWindow {
 						selectByMouse  : true
 						onTextChanged  : {
 							fin_timer.running = false;
-							if (fin_timer.doWork !== _Func) {
-								fin_timer.doWork = _Func;
+							if (fin_timer.doWork !== __func) {
+								fin_timer.doWork = __func;
 							} else if (!visible) {
 								fin_timer.doWork = null;
 							} else if (/[\w]+\s*\:/.test(text))
@@ -798,8 +798,8 @@ ApplicationWindow {
 									cpyMenu.showOn(th_TxtArea);
 							}
 						}
-						property bool _ModE : false
-						property var  _Func : () => {
+						property bool modif : false
+						property var __func : () => {
 							glTheme = Themes.toObjFormat(text);
 						}
 					}
@@ -1058,22 +1058,22 @@ ApplicationWindow {
 
 		if ((th_Editor.visible ^= 1)) {
 			th_TxtArea.text = Themes.toTextFormat(curStyle, xfl ? curName : '');
-			th_TxtArea._ModE = xfl;
+			th_TxtArea.modif = xfl;
 		} else if (xfl) {
 			glTheme = curStyle;
 			th_TxtArea.text = '';
 		} else {
 			const th_style = th_TxtArea.text,
-				  is_modif = th_TxtArea._ModE,
+				  is_modif = th_TxtArea.modif,
 				  up_index = Themes.collectFromText(th_style, is_modif ? gIdx : -1);
 
 			if (up_index !== -1) {
 				g_Select._Index = gParams._Index = up_index;
 				g_Select._Model = gParams._Model = Themes._NamesList;
 				glTheme = Themes._StyleList[up_index];
-				if (is_modif && gIdx !== up_index) {
-					_Colbi.saveTheme( curName, null );
-				} else
+				if (is_modif)
+					_Colbi.saveTheme( curName, [] );
+				if (!is_modif || gIdx === up_index)
 					_Colbi.saveTheme( Themes._NamesList[up_index], th_style.split('\n') );
 			} else
 				glTheme = curStyle;

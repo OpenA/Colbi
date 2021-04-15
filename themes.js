@@ -90,7 +90,7 @@ const genSafeName = (name = '') => {
 	if(!name || name.length < 3)
 		name = 'MyTheme №1';
 	for (let i = 1; _NamesList.includes(name); i++)
-		name = name.replace(/(?:\s?\d+)?$/, ' '+ i.toString());
+		name = name.replace(/(?:\s([№\#\&\$\-_\@А-яA-z])?\d+)?$/, ' $1'+ i.toString());
 	return name;
 }
 
@@ -109,17 +109,17 @@ const toObjFormat = (txt_style = '') => {
 	if (!/[\w]+\s*\:/.test(txt_style))
 		return null;
 
-	const obj_style = {};
+	const out_obj  = {};
 	let has_params = false;
 
 	for (const line of txt_style.trim().split(/\s*\n\s*/g)) {
 		const [key, val] = line.split(/\s*\:\s*/);
-		if (key in blue_ash) {
-			obj_style[key] = val.includes(',') ? val.split(/\s*\,\s*/g) : val;
+		if (key in light_cream) {
+			out_obj[key] = val.includes(',') ? val.split(/\s*\,\s*/g) : val;
 			has_params = true;
 		}
 	}
-	return has_params ? obj_style : null;
+	return has_params ? out_obj : null;
 }
 
 const collectFromArray = (arr_styles = []) => {
@@ -137,7 +137,7 @@ const collectFromArray = (arr_styles = []) => {
 			_NamesList.push(slot);
 		} else {
 			const [key, val] = slot.split(/\s*\:\s*/);
-			if (key in blue_ash)
+			if (key in light_cream)
 				obj_style[key] = val.includes(',') ? val.split(/\s*\,\s*/g) : val;
 		}
 	}
@@ -161,7 +161,7 @@ const collectFromText = (txt_style = '', repl_idx = -1) => {
 	if (repl_idx > 2) {
 		if (name !== _NamesList[repl_idx])
 			_NamesList[repl_idx] = genSafeName(name);
-		Object.assign( _StyleList[repl_idx], obj_style );
+		_StyleList[repl_idx] = obj_style;
 	} else {
 		repl_idx = _StyleList.push( obj_style ) - 1;
 				   _NamesList.push( genSafeName(name) );

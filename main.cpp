@@ -6,6 +6,8 @@
 #include <QFileInfo>
 #include <main.h>
 
+#define CHAR_0 '0'
+
 QMap<QString, QString> STR_Param;
 QMap<QString, bool>   BOOL_Param;
 QMap<QString, int>     INT_Param;
@@ -216,19 +218,19 @@ bool readTheme(QIODevice &device, QSettings::SettingsMap &map)
 	QTextStream inStream(&device);
 	QString group;
 
-	for (int idx = 0; !inStream.atEnd();) {
+	for (int idx = CHAR_0; !inStream.atEnd();) {
 
 		QString line = inStream.readLine();
 		if (line.isEmpty())
 			continue;
 		if (line.front() == '[' && line.back() == ']') {
 			group = line.mid(1, line.size() - 2);
-			idx   = 0;
+			idx   = CHAR_0;
 		}
 		else if (!group.isEmpty()) {
 
 			if (line.contains(":")) {
-				map.insert(group +"/"+ QString::number(idx++), QVariant(line));
+				map.insert(group +"/"+ QString(idx++), QVariant(line));
 			}
 		}
 	}
@@ -244,7 +246,6 @@ bool writeTheme(QIODevice &device, const QSettings::SettingsMap &map)
 	QString lastGroup;
 
 	for (const QString key : map.keys()) {
-
 		int sepi = key.indexOf("/");
 		if (sepi == -1) continue;
 
@@ -275,7 +276,7 @@ auto Colbi::loadTheme( const QString th_name ) -> QStringList
 		if (!keys.isEmpty()) {
 			out_list.push_back(th_name);
 			for (int i = 0; i < keys.length(); i++) {
-				out_list.push_back(themes.value(QString::number(i)).toString());
+				out_list.push_back(themes.value(QString(CHAR_0 + i)).toString());
 			}
 		}
 		themes.endGroup();
@@ -283,8 +284,7 @@ auto Colbi::loadTheme( const QString th_name ) -> QStringList
 	if (!(keys = themes.allKeys()).isEmpty()) {
 		QString lastGroup;
 
-		for (QString   key : keys) {
-
+		for (const QString key : keys) {
 			int sepi = key.indexOf("/");
 			if (sepi == -1) continue;
 
@@ -303,20 +303,20 @@ auto Colbi::loadTheme( const QString th_name ) -> QStringList
 void Colbi::saveTheme( const QString th_name, QStringList th_style )
 {
 	QSettings themes(ThLFormat, QSettings::UserScope, "Colbi", "themes");
-	int idx = 0;
+	int idx = CHAR_0;
 
 	themes.beginGroup(th_name);
 	if (!th_style.isEmpty()) {
-		int size = themes.childKeys().length();
+		int size = themes.childKeys().length() + CHAR_0;
 		for (QString line : th_style) {
 			if (line.contains(":")) {
-				themes.setValue(QString::number(idx++), QVariant(line));
+				themes.setValue(QString(idx++), QVariant(line));
 			}
 		}
 		while (idx < size)
-			themes.remove(QString::number(size--));
+			themes.remove(QString(size--));
 	}
-	if (idx == 0)
+	if (idx == CHAR_0)
 		themes.remove("");
 	themes.endGroup();
 }
