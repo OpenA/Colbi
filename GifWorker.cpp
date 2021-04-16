@@ -28,8 +28,14 @@ auto GifWrk::optim() -> bool
 	QByteArray gif_src;
 
 	bool is_ok = m_parent->qFileLoad(m_index, gif_src);
-	quint16 colors = m_recolor ? (quint8)m_quality + 1 : 256;
-	Gif_Dither plan = (Gif_Dither)(m_recolor ? m_dither + 1 : 1);
+
+	quint16  colors = 256;
+	Gif_Dither plan = DiP_FloydSteinberg;
+
+	if (m_colors >= 2 && m_colors <= 256) {
+		colors = m_colors;
+		plan   = (Gif_Dither)(m_dither + 1);
+	}
 
 	//qDebug() << "colors: " << colors << " lossy:" << m_lossy;
 	if ( is_ok ) {

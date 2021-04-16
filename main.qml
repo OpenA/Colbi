@@ -384,7 +384,7 @@ ApplicationWindow {
 						verticalAlignment  : Text.AlignVCenter
 					}
 					Text {
-						text   : setGIF.irate
+						text   : Math.abs(setGIF.irate)
 						color  : glTheme.textDefault
 						height : 32; width : 32
 						font   { pixelSize : 18; italic : true; bold : true }
@@ -427,8 +427,6 @@ ApplicationWindow {
 			Item {
 				id: setSVG
 				visible: false
-
-				property var params : []
 			}
 		}
 		Item {
@@ -979,8 +977,8 @@ ApplicationWindow {
 		}, {
 			get _Title() { return qsTr("DCT Algorithm:") },
 			get _Model() { return ["Huffman", "Arithmetic"] },
-			get _Index() { return  _Colbi.getParamInt("JPEG/algorithm") },
-			set _Index(num) {     _Colbi.setOptionInt("JPEG/algorithm", num) }
+			get _Index() { return  _Colbi.getParamInt("JPEG/arithmetic") },
+			set _Index(num) {     _Colbi.setOptionInt("JPEG/arithmetic", num) }
 		}, {
 			get _Maxiv() { return 100 },
 			get _Value() { return  _Colbi.getParamInt("JPEG/maxQuality") },
@@ -999,8 +997,8 @@ ApplicationWindow {
 		[/* GIF Opts - 3 */ {
 			get _Title() { return qsTr("Rebuild Colors") },
 			get _Swith() { return true },
-			get _Check() { return _Colbi.getParamBool("GIF/reColor") },
-			set _Check(flag) {   _Colbi.setOptionBool("GIF/reColor", flag) }
+			get _Check() { return _Colbi.getParamInt("GIF/maxColors") > 0 },
+			set _Check(flag) { setCurRange(flag && 0 < setGIF.irate ? setGIF.irate : -setGIF.irate, true) }
 		}, {
 			get _Title() { return qsTr("Dithering:") },
 			get _Model() { return [

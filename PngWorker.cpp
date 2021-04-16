@@ -134,8 +134,8 @@ auto PngWrk::optim() -> bool
 			}
 			ZopfliPNGOptions png_options;
 
-			png_options.lossy_transparent = m_8bit;
-			png_options.lossy_8bit        = m_8bit;
+			png_options.lossy_transparent = m_rgb8bit;
+			png_options.lossy_8bit        = m_rgb8bit;
 			png_options.verbose           = false;
 			png_options.use_zopfli        = true;
 

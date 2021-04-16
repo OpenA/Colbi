@@ -35,19 +35,21 @@ auto ImgWrk::pause () -> void {
 }
 auto GifWrk::reload(size_t size) -> void {
 	m_rawSize = size, m_optSize = 0;
-	m_recolor = BOOL_Param["GIF/reColor"];
-	m_quality =  INT_Param["GIF/maxColors"];
-	m_dither  =  INT_Param["GIF/ditherPlan"];
-	m_lossy   =   FP_Param["GIF/lossQuality"];
+	m_colors = INT_Param["GIF/maxColors"];
+	m_dither = INT_Param["GIF/ditherPlan"];
+	m_lossy  =  FP_Param["GIF/lossQuality"];
 }
-auto PngWrk::reload(size_t size) -> void {
+auto PngWrk::reload(size_t size) -> void
+{
 	m_rawSize = size, m_optSize = 0;
-	m_quality = INT_Param["PNG/minQuality"];
+	m_rgb8bit = BOOL_Param["PNG/rgb8bit"];
+	m_deflate =  INT_Param["PNG/deflatelib"];
+	m_quality =  INT_Param["PNG/minQuality"];
 }
 auto JpgWrk::reload(size_t size) -> void {
 	m_rawSize     = size, m_optSize = 0;
 	m_progressive = BOOL_Param["JPEG/progressive"];
-	m_algorithm   =  INT_Param["JPEG/algorithm"];
+	m_algorithm   =  INT_Param["JPEG/arithmetic"];
 	m_quality     =  INT_Param["JPEG/maxQuality"];
 }
 
@@ -61,7 +63,7 @@ Colbi::Colbi(QObject *parent) : QObject(parent)
 	}
 	for (QString key : BOOL_Param.keys()) {
 		if (m_settings->contains(key))
-		   BOOL_Param[key] = m_settings->value(key).toBool();
+			BOOL_Param[key] = m_settings->value(key).toBool();
 	}
 	for (QString key : INT_Param.keys()) {
 		if (m_settings->contains(key))
@@ -117,15 +119,15 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 		status = S_Error;
 	} else if (mime.inherits("image/jpeg")) {
 		taskList.append(
-			new JpgWrk( this, num, size, INT_Param["JPEG/maxQuality"], BOOL_Param["JPEG/progressive"], INT_Param["JPEG/algorithm"])
+			new JpgWrk(this, num, size, INT_Param["JPEG/maxQuality"], INT_Param["JPEG/arithmetic"], BOOL_Param["JPEG/progressive"])
 		);
 	} else if (mime.inherits("image/png") || mime.inherits("image/bmp")) {
 		taskList.append(
-			new PngWrk( this, num, size, INT_Param["PNG/minQuality"], BOOL_Param["PNG/8bitColors"])
+			new PngWrk(this, num, size, INT_Param["PNG/minQuality"], INT_Param["PNG/deflatelib"], BOOL_Param["PNG/rgb8bit"])
 		);
 	} else if (mime.inherits("image/gif")) {
 		taskList.append(
-			new GifWrk( this, num, size, INT_Param["GIF/maxColors"] - 1, BOOL_Param["GIF/reColor"], INT_Param["GIF/ditherPlan"], FP_Param["GIF/lossQuality"])
+			new GifWrk(this, num, size, INT_Param["GIF/maxColors"], INT_Param["GIF/ditherPlan"], FP_Param["GIF/lossQuality"])
 		);
 	} else {
 		taskList.append( new TWrk );
@@ -143,7 +145,7 @@ auto Colbi::addTask  ( const QString path) -> void {
 	const QFileInfo fi(path);
 
 	if (!fi.exists() || !fi.permission(QFile::WriteUser | QFile::ReadGroup) ||
-		 fi.absolutePath().startsWith(SAVE_ORI_DIR.absolutePath(), SYS_CASE_INS ? Qt::CaseInsensitive : Qt::CaseSensitive))
+		fi.absolutePath().startsWith(SAVE_ORI_DIR.absolutePath(), SYS_CASE_INS ? Qt::CaseInsensitive : Qt::CaseSensitive))
 		return;
 
 	if (fi.isSymLink()) {
@@ -167,7 +169,7 @@ auto Colbi::addTask  ( const QString path) -> void {
 				taskList[idx]->start();
 			};
 		} else {
-			taskWorker(fi.fileName(), absfile, size );
+			taskWorker(fi.fileName(), absfile, size);
 		}
 	}
 }
@@ -191,12 +193,12 @@ auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
 	QString name = fi.completeBaseName();
 	QString ext  = fi.suffix();
 
-	bool mv_tmp = BOOL_Param["General/moveToTemp"];
-	QString pat = STR_Param["General/namePattern"];
+	bool mv_tmp = BOOL_Param["moveToTemp"];
+	QString pat =  STR_Param["namePattern"];
 
 	if (mv_tmp) {
 		if (!SAVE_ORI_DIR.exists())
-			 SAVE_ORI_DIR.mkpath(".");
+			SAVE_ORI_DIR.mkpath(".");
 		QString lastmod = fi.lastModified().toLocalTime().toString("d.MM.yyyy hh:mm");
 		QFile::rename(src_path + name +"."+ ext, SAVE_ORI_DIR.absolutePath() +"/"+ name +" ("+ lastmod +")."+ ext);
 	}
@@ -328,17 +330,16 @@ int main(int argc, char *argv[])
 	STR_Param["fileNameExt"] = "_optim_";
 
    BOOL_Param["JPEG/progressive"] = true;
-	INT_Param["JPEG/algorithm"  ] = 0;
+	INT_Param["JPEG/arithmetic" ] = 0;
 	INT_Param["JPEG/maxQuality" ] = -90;
 
-   BOOL_Param["PNG/rgb8bit" ] = true;
-	INT_Param["PNG/compSpeed"] = -1;
+   BOOL_Param["PNG/rgb8bit"   ] = true;
+	INT_Param["PNG/deflatelib"] = 0;
 	INT_Param["PNG/minQuality"] = 100;
 
-   BOOL_Param["GIF/reColor"] = false;
 	INT_Param["GIF/maxColors"] = 256;
 	INT_Param["GIF/ditherPlan"] = 1;
-	 FP_Param["GIF/lossQuality"] = 0;
+	FP_Param["GIF/lossQuality"] = 0;
 
 	if (ThLFormat == QSettings::InvalidFormat) {
 		qCritical() << "Error create theme format";
