@@ -240,7 +240,7 @@ ApplicationWindow {
 						font { pixelSize : 18; italic: true }
 						selectByMouse    : true
 						color            : glTheme.textColorA
-						text             : _Colbi.getParamStr("fileNameExt")
+						text             : _Colbi.getParamStr("namePattern")
 						selectionColor   : glTheme.selectColor
 						background       : Rectangle {
 							color        : glTheme.taskListBG[1]
@@ -258,7 +258,7 @@ ApplicationWindow {
 						}
 						property string _Ext : "\n"
 						property var   _Func : () => {
-							_Colbi.setOptionStr("fileNameExt", (_Ext = text))
+							_Colbi.setOptionStr("namePattern", (_Ext = text))
 						}
 						MouseArea {
 							anchors.fill    : parent

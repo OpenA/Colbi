@@ -192,9 +192,15 @@ auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
 
 	QString name = fi.completeBaseName();
 	QString ext  = fi.suffix();
+	QString vex  = (
+		type == PNG ? "png" :
+		type == JPG ? "jpg" :
+		type == GIF ? "gif" : ext
+	);
 
-	bool mv_tmp = BOOL_Param["moveToTemp"];
 	QString pat =  STR_Param["namePattern"];
+	bool mv_tmp = BOOL_Param["moveToTemp"],
+		 re_ext = mv_tmp || !pat.isEmpty();
 
 	if (mv_tmp) {
 		if (!SAVE_ORI_DIR.exists())
@@ -203,11 +209,13 @@ auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
 		QFile::rename(src_path + name +"."+ ext, SAVE_ORI_DIR.absolutePath() +"/"+ name +" ("+ lastmod +")."+ ext);
 	}
 
-	QFile file(src_path + name + pat +"."+ ext);
+	QFile file(src_path + name + pat +"."+ (re_ext ? vex : ext));
 	 bool ok;
 	if (( ok = file.open(QIODevice::WriteOnly))) {
 		file.write(blob);
 		file.close();
+		if (!re_ext && ext != vex)
+			QFile::rename(src_path + name +"."+ ext, src_path + name +"."+ vex);
 	}
 	return ok;
 }
@@ -327,7 +335,7 @@ int main(int argc, char *argv[])
 {
    BOOL_Param["moveToTemp" ] = true;
 	STR_Param["colorTheme" ] = "Light Cream";
-	STR_Param["fileNameExt"] = "_optim_";
+	STR_Param["namePattern"] = "_optim_";
 
    BOOL_Param["JPEG/progressive"] = true;
 	INT_Param["JPEG/arithmetic" ] = 0;
