@@ -15,7 +15,7 @@
 #include <QDebug>
 #endif
 
-enum {
+enum STAT_T {
 	S_Idle = 0,
 	S_Working ,
 	S_Complete,
@@ -24,12 +24,9 @@ enum {
 	S_Unknown
 };
 
-enum IMG_T {
-	PNG = 0,
-	JPG,
-	GIF,
-	BMP,
-	WebP
+enum EXT_T {
+	/* IMG formats */
+	PNG, JPG, GIF
 };
 
 /* QEvent extends for tasks */
@@ -38,9 +35,9 @@ class TaskEvent : public QEvent
 public:
 	size_t  m_origSz, m_newSz;
 	quint16 m_index;
-	quint8  m_status;
+	STAT_T  m_status;
 
-	TaskEvent(quint16 i, quint8 s, size_t o = 0, size_t n = 0) : QEvent( User )
+	TaskEvent(quint16 i, STAT_T s, size_t o = 0, size_t n = 0) : QEvent( User )
 	{
 		m_status = s, m_index = i;
 		m_origSz = o, m_newSz = n;
@@ -79,7 +76,7 @@ public:
 	bool event(QEvent *event) override;
 
 	bool qFileLoad (const quint16, QByteArray &);
-	bool qFileStore(const quint16, QByteArray &, IMG_T);
+	bool qFileStore(const quint16, QByteArray &, EXT_T);
 
 signals:
 	void taskProgress( unsigned short num, long long orig_size, long long new_size  );

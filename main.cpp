@@ -112,29 +112,40 @@ auto Colbi::taskWorker( QString name, QString absfile, qint64 size) -> void {
 	const QMimeType mime = db.mimeTypeForFile( absfile );
 			quint16 num  = taskList.length();
 
-	unsigned char status = S_Idle;
+	STAT_T status = S_Idle;
+	TWrk * worker = (
 
-	if (size > 0xFFFFFFFFU) {
-		taskList.append( new TWrk );
-		status = S_Error;
-	} else if (mime.inherits("image/jpeg")) {
-		taskList.append(
-			new JpgWrk(this, num, size, INT_Param["JPEG/maxQuality"], INT_Param["JPEG/arithmetic"], BOOL_Param["JPEG/progressive"])
-		);
-	} else if (mime.inherits("image/png") || mime.inherits("image/bmp")) {
-		taskList.append(
-			new PngWrk(this, num, size, INT_Param["PNG/minQuality"], INT_Param["PNG/deflatelib"], BOOL_Param["PNG/rgb8bit"])
-		);
-	} else if (mime.inherits("image/gif")) {
-		taskList.append(
-			new GifWrk(this, num, size, INT_Param["GIF/maxColors"], INT_Param["GIF/ditherPlan"], FP_Param["GIF/lossQuality"])
-		);
-	} else {
-		taskList.append( new TWrk );
+		mime.inherits("image/jpeg") ?
+
+		new JpgWrk( this, num, size,
+		   INT_Param["JPEG/maxQuality"],
+		   INT_Param["JPEG/arithmetic"],
+		  BOOL_Param["JPEG/progressive"])
+
+	  : mime.inherits("image/png") || mime.inherits("image/bmp") ?
+
+		new PngWrk( this, num, size,
+		   INT_Param["PNG/minQuality"],
+		   INT_Param["PNG/deflatelib"],
+		  BOOL_Param["PNG/rgb8bit"])
+
+	  : mime.inherits("image/gif") ?
+
+		new GifWrk( this, num, size,
+		  INT_Param["GIF/maxColors"],
+		  INT_Param["GIF/ditherPlan"],
+		   FP_Param["GIF/lossQuality"])
+
+	  : new TWrk
+	);
+
+	if (worker->is_busy)
 		status = S_Unknown;
-	}
+
+	taskList.append( worker  );
 	fileList.append( absfile );
-	emit taskAdded((unsigned short)num, status, (long long)size, name);
+
+	emit taskAdded((unsigned short)num, (unsigned char)status, (long long)size, name);
 }
 
 auto Colbi::runTask  ( const quint16 idx ) -> void { taskList[idx]->start(); }
@@ -185,7 +196,7 @@ auto Colbi::qFileLoad(const quint16 idx, QByteArray &blob) -> bool
 	return ok;
 }
 
-auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, IMG_T type) -> bool
+auto Colbi::qFileStore(const quint16 idx, QByteArray &blob, EXT_T type) -> bool
 {
 	const QFileInfo fi(fileList[idx]);
 	const QString src_path = fi.absolutePath() +"/";
