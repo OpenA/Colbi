@@ -2,7 +2,7 @@
 const _PANNEL_BUTTON_W = 100;
 const _PANNEL_BUTTON_H = 42;
 const _MARGINS_        = 8;
-const _EMBEDS_COUNT    = 3;
+const _EMBEDS_COUNT    = 4;
 
 const toPreferStr = (size = 0, rate = 0) => [`${
 	size < 1e3  ? size : // ~ 320 b
@@ -84,8 +84,27 @@ const blue_ash = Object.assign({
 	selectColor : "#4e8e9e"
 }, default_stat);
 
-const _NamesList = ["Light Cream", "Dark Mary", "Blue Ash"];
-const _StyleList = [ light_cream ,  dark_mary,   blue_ash ];
+const charm_green = Object.assign({
+	taskListBG  : ["#f1ffde", "#e1efce"],
+	pannelBG    : "#537347",
+	pannelButton: "white",
+
+	textDefault : "floralwhite",
+	checkMark   : "o",
+
+	inputFill   : "brown",
+	inputBorder : "#eed",
+
+	textColorA  : "#a44c4c",
+	textColorB  : "#609501",
+	textColorC  : "#313f1e",
+	textColorD  : "#717f5e",
+
+	selectColor : "#55ffaf14"
+}, default_stat);
+
+const _NamesList = ["Light Cream", "Dark Mary", "Blue Ash", "Charm Green"];
+const _StyleList = [ light_cream ,  dark_mary,   blue_ash ,  charm_green ];
 
 const genSafeName = (name = '') => {
 	if(!name || name.length < 3)
