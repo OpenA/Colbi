@@ -273,11 +273,11 @@ bool writeTheme(QIODevice &device, const QSettings::SettingsMap &map)
 		QString group  = key.mid(0, sepi);
 		if (lastGroup != group) {
 			if (!lastGroup.isEmpty())
-				outStream << endl;
-			outStream << QString("[%1]").arg(group) << endl;
+				outStream << Qt::endl;
+			outStream << QString("[%1]").arg(group) << Qt::endl;
 			lastGroup = group;
 		}
-		outStream << map.value(key).toString() << endl;
+		outStream << map.value(key).toString() << Qt::endl;
 	}
 	return true;
 }
