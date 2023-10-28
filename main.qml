@@ -6,7 +6,7 @@ import "themes.js" as Themes
 
 ApplicationWindow {
 	id      : window
-	title   : qsTr("Colbi")
+	title   : "Colbi"
 	width   : 640; minimumWidth  : 640
 	height  : 480; minimumHeight : 480
 	visible : true
@@ -146,7 +146,7 @@ ApplicationWindow {
 				height : Themes._PANNEL_BUTTON_H
 				color  : setJPEG.visible ? "transparent" : glTheme.pannelButton
 				Text {
-					text  : qsTr("JPEG")
+					text  : "JPEG"
 					color : setJPEG.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
@@ -163,7 +163,7 @@ ApplicationWindow {
 				height : Themes._PANNEL_BUTTON_H
 				color  : setPNG.visible ? "transparent" : glTheme.pannelButton
 				Text {
-					text  : qsTr("PNG")
+					text  : "PNG"
 					color : setPNG.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
@@ -180,7 +180,7 @@ ApplicationWindow {
 				height : Themes._PANNEL_BUTTON_H
 				color  : setGIF.visible ? "transparent" : glTheme.pannelButton
 				Text {
-					text  : qsTr("GIF")
+					text  : "GIF"
 					color : setGIF.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
@@ -198,7 +198,7 @@ ApplicationWindow {
 				color  : setSVG.visible ? "transparent" : glTheme.pannelButton
 				visible: false
 				Text {
-					text  : qsTr("SVG")
+					text  : "SVG"
 					color : setSVG.visible ? glTheme.pannelButton : glTheme.inputFill
 					anchors.centerIn: parent
 					font { pixelSize: 16; bold: true }
@@ -274,7 +274,7 @@ ApplicationWindow {
 					}
 					Text {
 						height : 32
-						text   : qsTr(".jpg")
+						text   : ".jpg"
 						color  : glTheme.textDefault
 						font { pixelSize  : 18; italic: true }
 						verticalAlignment : Text.AlignVCenter
