@@ -24,8 +24,8 @@ set(build_deps
 	zopfli
 )
 
-option(ENABLE_GIF "enable GIF Optim module" ON)
-if (ENABLE_GIF)
+option(WITH_GIF "enable GIF Optim module" ON)
+if (WITH_GIF)
 
   set(gifsi_params
     -DENABLE_SHARED=0 -DBUILD_GIFSICLE=0 -DWITH_SIMD=1)
@@ -49,8 +49,8 @@ if (ENABLE_GIF)
 	unset(binary_dir)
 endif()
 
-option(ENABLE_JPG "enable JPEG Optim module" ON)
-if (ENABLE_JPG)
+option(WITH_JPG "enable JPEG Optim module" ON)
+if (WITH_JPG)
 
 	set(mozjpeg_params
 		-DWITH_ARITH_ENC=1 -DENABLE_SHARED=0 -DPNG_SUPPORTED=0 -DWITH_SIMD=1
@@ -76,6 +76,23 @@ if (ENABLE_JPG)
 	)
 	unset(mozjpeg_params)
 	unset(binary_dir)
+endif()
+
+option(WITH_GUI "enable GUI" ON)
+if (WITH_GUI)
+
+	set(fonico_dir ${PROJECT_SOURCE_DIR}/lib/fonico)
+	set(fonico_params
+		-C=AEGVX -O=${LIB_INSTALL_DIR}/fonico.ttf
+		-F='ficoTria','ficoPen','ficoGear','ficoCheckV','ficoCheckX'
+	)
+	ExternalProject_Add(fonico
+		SOURCE_DIR ${fonico_dir}
+		INSTALL_COMMAND ""
+		CONFIGURE_COMMAND ""
+		BUILD_COMMAND ${fonico_dir}/make_ttf.sh ${fonico_params}
+	)
+	set(build_deps ${build_deps} fonico)
 endif()
 
 set(PROJECT_EXTRA_LIBS   ${PROJECT_EXTRA_LIBS}   ${extra_libs}   PARENT_SCOPE)

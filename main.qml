@@ -19,7 +19,7 @@ ApplicationWindow {
 
 	color: glTheme.taskListBG[0]
 
-	FontLoader { id: fonico; source: "lib/_Dist_/fonico.ttf" }
+	FontLoader { id: fonico; source: "build/lib/fonico.ttf" }
 
 	Colbi {
 		id: _Colbi
