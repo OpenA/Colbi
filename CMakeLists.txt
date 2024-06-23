@@ -24,12 +24,9 @@ set(PROJECT_EXTRA_LIBS   "")
 set(PROJECT_INCLUDE_DIRS "src")
 set(PROJECT_EXTRA_DEFS   "")
 set(PROJECT_SOURCES
-	main.cpp
+	src/main.cpp
 	src/Colbi.hpp
 	src/Colbi.cpp
-	GifWorker.cpp
-	JpgWorker.cpp
-	PngWorker.cpp
 	qml.qrc
 	${TS_FILES}
 )

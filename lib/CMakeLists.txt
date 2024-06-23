@@ -26,6 +26,9 @@ set(build_deps
 set(project_defs
 	-DWITH_PNG
 )
+set(modules_src
+	src/PngWorker.cpp
+)
 
 option(WITH_GIF "enable GIF Optim module" ON)
 if (WITH_GIF)
@@ -46,6 +49,7 @@ if (WITH_GIF)
 	set(build_deps   ${build_deps} gifsi)
 	set(extra_libs   ${extra_libs} libgifsi)
 	set(project_defs ${project_defs} -DWITH_GIF)
+	set(modules_src  ${modules_src} src/GifWorker.cpp)
 	set(include_dirs ${include_dirs}
 		${PROJECT_SOURCE_DIR}/lib/libgifsi/include
 	)
@@ -75,6 +79,7 @@ if (WITH_JPG)
 	set(build_deps   ${build_deps} mozjpeg)
 	set(extra_libs   ${extra_libs} libmozjpeg)
 	set(project_defs ${project_defs} -DWITH_JPG)
+	set(modules_src  ${modules_src} src/JpgWorker.cpp)
 	set(include_dirs ${include_dirs}
 		${PROJECT_SOURCE_DIR}/lib/mozjpeg
 		${binary_dir}
@@ -105,3 +110,4 @@ set(PROJECT_EXTRA_LIBS   ${PROJECT_EXTRA_LIBS}   ${extra_libs}   PARENT_SCOPE)
 set(PROJECT_EXTRA_DEFS   ${PROJECT_EXTRA_DEFS}   ${project_defs} PARENT_SCOPE)
 set(PROJECT_INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS} ${include_dirs} PARENT_SCOPE)
 set(PROJECT_DEPENDENCIES ${PROJECT_DEPENDENCIES} ${build_deps}   PARENT_SCOPE)
+set(PROJECT_SOURCES      ${PROJECT_SOURCES}      ${modules_src}  PARENT_SCOPE)
