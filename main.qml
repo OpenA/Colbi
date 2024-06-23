@@ -13,8 +13,8 @@ ApplicationWindow {
 
 	property int curIdx  : 0
 	property var glTheme : Themes.collectFromArray(
-		_Colbi.loadTheme(""),
-		_Colbi.getParamStr("colorTheme")
+		colbi.loadTheme(""),
+		colbi.getOptionStr("colorTheme")
 	);
 
 	color: glTheme.taskListBG[0]
@@ -22,8 +22,8 @@ ApplicationWindow {
 	FontLoader { id: fonico; source: "build/lib/fonico.ttf" }
 
 	Colbi {
-		id: _Colbi
-		onTaskAdded      : {
+		id: colbi
+		onTaskAdded: {
 			const [fileSize, sizeEx] = Themes.toPreferStr(file_size);
 			taskListModel.append({
 				fileName : file_name.length > 53 ? "..."+ file_name.slice(-50) : file_name,
@@ -31,7 +31,7 @@ ApplicationWindow {
 				statID   : Object.keys(Themes.default_stat)[status],
 				compress : ""
 			});
-			_Colbi.runTask(num);
+			colbi.doTask(num, Colbi.AStart);
 		}
 		onTaskProgress   : {
 			const task = taskListModel.get(num);
@@ -240,7 +240,7 @@ ApplicationWindow {
 						font { pixelSize : 18; italic: true }
 						selectByMouse    : true
 						color            : glTheme.textColorA
-						text             : _Colbi.getParamStr("namePattern")
+						text             : colbi.getOptionStr("namePattern")
 						selectionColor   : glTheme.selectColor
 						background       : Rectangle {
 							color        : glTheme.taskListBG[1]
@@ -258,7 +258,7 @@ ApplicationWindow {
 						}
 						property string _Ext : "\n"
 						property var   _Func : () => {
-							_Colbi.setOptionStr("namePattern", (_Ext = text))
+							colbi.setOptionStr("namePattern", (_Ext = text))
 						}
 						MouseArea {
 							anchors.fill    : parent
@@ -286,7 +286,7 @@ ApplicationWindow {
 				visible      : false
 				anchors.fill : parent
 
-				property var irate: _Colbi.getParamInt("JPEG/maxQuality")
+				property var irate: colbi.getOptionInt("JPEG/maxQuality")
 
 				Row {
 					y             : 130
@@ -340,7 +340,7 @@ ApplicationWindow {
 				id      : setPNG
 				visible : false
 
-				property int irate : _Colbi.getParamInt("PNG/minQuality")
+				property int irate : colbi.getOptionInt("PNG/minQuality")
 
 				Row {
 					y             : 140
@@ -368,7 +368,7 @@ ApplicationWindow {
 				id: setGIF
 				visible: false
 
-				property int irate : _Colbi.getParamInt("GIF/maxColors")
+				property int irate : colbi.getOptionInt("GIF/maxColors")
 
 				Row {
 					y             : 140
@@ -414,10 +414,10 @@ ApplicationWindow {
 						to             : 0
 						stepSize       : 0.05
 						snapMode       : Dial.SnapOnRelease
-						value          : _Colbi.getParamReal("GIF/lossQuality")
+						value          : colbi.getOptionReal("GIF/lossQuality")
 						onPressedChanged : {
 							if ( !pressed )
-								_Colbi.setOptionReal("GIF/lossQuality", Math.round(value * 100) / 100);
+								colbi.setOptionReal("GIF/lossQuality", Math.round(value * 100) / 100);
 						}
 						palette { dark : glTheme.textDefault }
 						anchors.fill   : parent
@@ -909,7 +909,7 @@ ApplicationWindow {
 
 	function makeTasks(urls) {
 		for (var i = 0; i < urls.length; i++) {
-			_Colbi.addTask(
+			colbi.addTask(
 				decodeURI(urls[i].replace("file://",""))
 			);
 		}
@@ -945,8 +945,8 @@ ApplicationWindow {
 		property var showOn : idx => { num = idx; open(); }
 
 		MenuItem { text: "Show Store"; onTriggered: console.log("ok") }
-		MenuItem { text: "Pause"     ; onTriggered: _Colbi.waitTask(taskMenu.num) }
-		MenuItem { text: "Cancel"    ; onTriggered: _Colbi.killTask(taskMenu.num) }
+		MenuItem { text: "Pause"     ; onTriggered: colbi.doTask(taskMenu.num, Colbi.APause ) }
+		MenuItem { text: "Cancel"    ; onTriggered: colbi.doTask(taskMenu.num, Colbi.ACancel) }
 	}
 	Timer {
 		id: fin_timer
@@ -959,58 +959,58 @@ ApplicationWindow {
 		[/* Global Opts - 0 */ {
 			get _Title() { return qsTr("Move originals to temporary dir") },
 			get _Swith() { return false },
-			get _Check() { return _Colbi.getParamBool("moveToTemp") },
-			set _Check(flag) {   _Colbi.setOptionBool("moveToTemp", flag) }
+			get _Check() { return colbi.getOptionBool("moveToTemp") },
+			set _Check(flag) {    colbi.setOptionBool("moveToTemp", flag) }
 		}, {
 			get _Title() { return qsTr("Color Theme:") },
 			get _Model() { return Themes._NamesList },
-			get _Index() { return Themes._NamesList.indexOf(_Colbi.getParamStr("colorTheme")) },
-			set _Index(num) {     _Colbi.setOptionStr("colorTheme", Themes._NamesList[num]);
+			get _Index() { return Themes._NamesList.indexOf(colbi.getOptionStr("colorTheme")) },
+			set _Index(num) {     colbi.setOptionStr("colorTheme", Themes._NamesList[num]);
 				glTheme = Themes._StyleList[num];
 			}
 		}],
 		[/* JPEG Opts - 1 */ {
 			get _Title() { return qsTr("Progressive") },
 			get _Swith() { return false },
-			get _Check() { return _Colbi.getParamBool("JPEG/progressive") },
-			set _Check(flag) {   _Colbi.setOptionBool("JPEG/progressive", flag) }
+			get _Check() { return colbi.getOptionBool("JPEG/progressive") },
+			set _Check(flag) {    colbi.setOptionBool("JPEG/progressive", flag) }
 		}, {
 			get _Title() { return qsTr("DCT Algorithm:") },
 			get _Model() { return ["Huffman", "Arithmetic"] },
-			get _Index() { return  _Colbi.getParamInt("JPEG/arithmetic") },
-			set _Index(num) {     _Colbi.setOptionInt("JPEG/arithmetic", num) }
+			get _Index() { return colbi.getOptionInt("JPEG/arithmetic") },
+			set _Index(num) {     colbi.setOptionInt("JPEG/arithmetic", num) }
 		}, {
 			get _Maxiv() { return 100 },
-			get _Value() { return  _Colbi.getParamInt("JPEG/maxQuality") },
-			set _Value(rate) {   _Colbi.setOptionInt("JPEG/maxQuality", rate) }
+			get _Value() { return colbi.getOptionInt("JPEG/maxQuality") },
+			set _Value(rate) {    colbi.setOptionInt("JPEG/maxQuality", rate) }
 		}],
 		[/* PNG Opts - 2 */ {
 			get _Title() { return qsTr("Convert all to 8bit pallete") },
 			get _Swith() { return false },
-			get _Check() { return _Colbi.getParamBool("PNG/rgb8bit") },
-			set _Check(flag) {   _Colbi.setOptionBool("PNG/rgb8bit", flag) }
+			get _Check() { return colbi.getOptionBool("PNG/rgb8bit") },
+			set _Check(flag) {    colbi.setOptionBool("PNG/rgb8bit", flag) }
 		},,{
 			get _Maxiv() { return 100 },
-			get _Value() { return  _Colbi.getParamInt("PNG/minQuality") },
-			set _Value(rate) {    _Colbi.setOptionInt("PNG/minQuality", rate) }
+			get _Value() { return colbi.getOptionInt("PNG/minQuality") },
+			set _Value(rate) {    colbi.setOptionInt("PNG/minQuality", rate) }
 		}],
 		[/* GIF Opts - 3 */ {
 			get _Title() { return qsTr("Rebuild Colors") },
 			get _Swith() { return true },
-			get _Check() { return _Colbi.getParamInt("GIF/maxColors") > 0 },
+			get _Check() { return colbi.getOptionInt("GIF/maxColors") > 0 },
 			set _Check(flag) { setCurRange(flag && 0 < setGIF.irate ? setGIF.irate : -setGIF.irate, true) }
 		}, {
 			get _Title() { return qsTr("Dithering:") },
 			get _Model() { return [
 			  "Noise", "3x3 Quads", "4x4 Quads", "8x8 Quads", "45 Deg. Lines",
 			  "64x64 Quads", "Square Halftone", "Triangle Halftone", "8x8 Halftone"]},
-			get _Index() { return  _Colbi.getParamInt("GIF/ditherPlan") },
-			set _Index(num) {     _Colbi.setOptionInt("GIF/ditherPlan", num) }
+			get _Index() { return colbi.getOptionInt("GIF/ditherPlan") },
+			set _Index(num) {     colbi.setOptionInt("GIF/ditherPlan", num) }
 		 }, {
 			get _Maxiv() { return 256 },
 			get _Minov() { return 2   },
-			get _Value() { return  _Colbi.getParamInt("GIF/maxColors") },
-			set _Value(rate) {    _Colbi.setOptionInt("GIF/maxColors", rate) }
+			get _Value() { return colbi.getOptionInt("GIF/maxColors") },
+			set _Value(rate) {    colbi.setOptionInt("GIF/maxColors", rate) }
 		}]
 	]
 
@@ -1060,9 +1060,9 @@ ApplicationWindow {
 						glTheme = Themes._StyleList[up_index];
 				g_Select._Index = glParams[0][1]._Index = up_index;
 				if (is_modif)
-					_Colbi.saveTheme( curName, [] );
+					colbi.saveTheme( curName, [] );
 				if (!is_modif || gIdx === up_index)
-					_Colbi.saveTheme( Themes._NamesList[up_index], th_style.split('\n') );
+					colbi.saveTheme( Themes._NamesList[up_index], th_style.split('\n') );
 			} else
 				glTheme = curStyle;
 			th_TxtArea.text = '';

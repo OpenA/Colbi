@@ -1,150 +1,154 @@
-#include <main.h>
+#include "Colbi.hpp"
 #include <jpeglib.h>
 
-static auto mozjInit(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, const unsigned char* src_jpg, const unsigned long src_size) -> void
-{
-	/* Initialize the JPEG decompression object with default error handling. */
-	jpeg_error_mgr *jsrcerr = srcinfo->err = jpeg_std_error(new jpeg_error_mgr);
-	jpeg_create_decompress(srcinfo);
+void mozjThrowMsg(j_common_ptr cinfo) {
+# ifdef QT_DEBUG
+	char error_msg[JMSG_LENGTH_MAX];
+	// Call the function pointer to get the error message
+	(*cinfo->err->format_message)(cinfo, error_msg);
+	qWarning(error_msg);
+# endif
+	throw cinfo->err->msg_code;
+};
 
-	/* Initialize the JPEG compression object with default error handling. */
-	jpeg_error_mgr *jdsterr = dstinfo->err = jpeg_std_error(new jpeg_error_mgr);
-	jpeg_create_compress(dstinfo);
+static inline void mozjInitDecoder(
+	jpeg_decompress_struct *jdec,
+	jpeg_compress_struct   *jcom,
 
-	jsrcerr->trace_level = jdsterr->trace_level = 0;
-	jsrcerr->error_exit  = jdsterr->error_exit  = [](j_common_ptr cdinfo) {
-		char error_msg[JMSG_LENGTH_MAX];
-		// Call the function pointer to get the error message
-		(*cdinfo->err->format_message)(cdinfo, error_msg);
-		throw QString(error_msg);
-	};
-	/* ... */
-	jpeg_mem_src(srcinfo, src_jpg, src_size);
-	/* Read file header */
-	jpeg_read_header(srcinfo, TRUE);
-	/* Set Compression settings */
-	jpeg_c_set_int_param(dstinfo, JINT_COMPRESS_PROFILE, JCP_MAX_COMPRESSION);
+	const unsigned char *src_data,
+	const unsigned long  src_size
+) {
+	/* hook src data for decompressor */
+	jpeg_mem_src(jdec, src_data, src_size);
+	/* this sets default decompress params,
+	   then read from img header e.g. colorspace, w/h etc */
+	jpeg_read_header(jdec, TRUE);
+	/* wee need set profile before do `jpeg_set_defaults` for compressor */
+	jpeg_c_set_int_param(jcom, JINT_COMPRESS_PROFILE, JCP_MAX_COMPRESSION);
 }
 
-static inline auto mozj_set_encmethods(j_compress_ptr dstinfo, bool progss, bool arith) -> void {
-	if (progss)
-		jpeg_simple_progression(dstinfo);
-#ifdef C_ARITH_CODING_SUPPORTED
-	dstinfo->optimize_coding = arith ? FALSE : TRUE;
-	dstinfo->arith_code      = arith ? TRUE : FALSE;
-#else
-	dstinfo->optimize_coding = TRUE;
-#endif
-}
+static inline void mozjLosslessOptim(
+	jpeg_decompress_struct *jdec,
+	jpeg_compress_struct   *jcom,
 
-static auto mozjLosslessOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, unsigned char **out_jpg, unsigned long *out_size, bool progss, bool arith) -> void
-{
+	unsigned char **out_data,
+	unsigned long  *out_size
+) {
 	/* Read source file as DCT coefficients */
-	jvirt_barray_ptr *coef_arrays = jpeg_read_coefficients(srcinfo);
-	/* Initialize destination compression parameters from source values */
-	jpeg_copy_critical_parameters(srcinfo, dstinfo);
-	/* Set progressive/baseline & arithmetic/huffman encode methods */
-	mozj_set_encmethods(dstinfo, progss, arith);
+	jvirt_barray_ptr *coef_arrays = jpeg_read_coefficients(jdec);
+	/* This fn first do `jpeg_set_defaults` and then copy image params 
+	   like color space and w/h from decompressor (src) to compressor (dest) */
+	jpeg_copy_critical_parameters(jdec, jcom);
+	/* JCP_MAX_COMPRESSION sets progressive as default
+	jpeg_simple_progression(jcom); */
+	jcom->optimize_coding = TRUE;
+	jcom->dct_method = JDCT_ISLOW;
 	/* Fill output img buffer */
-	jpeg_mem_dest(dstinfo, out_jpg, out_size);
+	jpeg_mem_dest(jcom, out_data, out_size);
 	/* Start compressor (note no image data is actually written here) */
-	jpeg_write_coefficients(dstinfo, coef_arrays);
-	jpeg_finish_compress  ( dstinfo );
-	jpeg_finish_decompress( srcinfo );
+	jpeg_write_coefficients(jcom, coef_arrays);
+	/* Finish compression (write result) */
+	jpeg_finish_compress(jcom);
+	jpeg_finish_decompress(jdec);
 }
 
-static auto mozjLossyOptim(j_decompress_ptr srcinfo, j_compress_ptr dstinfo, unsigned char **out_jpg, unsigned long *out_size, bool progss, bool arith, char qmax) -> void
-{
-	JDIMENSION max_scanlines = 8 * srcinfo->max_v_samp_factor;
+static inline void mozjLossyOptim(
+	jpeg_decompress_struct *jdec,
+	jpeg_compress_struct   *jcom,
+
+	unsigned char **tmp_data,
+	unsigned long  *tmp_size,
+
+	int qmax
+) {
+	JDIMENSION max_lines = 8 * jdec->max_v_samp_factor;
+	signed int i, max_comps = jdec->num_components;
 	JSAMPARRAY plane_pointer[4];
 
-	srcinfo->raw_data_out        = TRUE;
-	srcinfo->do_fancy_upsampling = FALSE;
+	jdec->raw_data_out = TRUE;
+	jdec->do_fancy_upsampling = FALSE;
+	jdec->two_pass_quantize = TRUE;
 
-	jpeg_start_decompress(srcinfo);
-	jpeg_set_defaults    (dstinfo);
+	jpeg_start_decompress(jdec);
+	jpeg_copy_critical_parameters(jdec, jcom);
 
-	dstinfo->in_color_space   = srcinfo->out_color_space;
-	dstinfo->input_components = srcinfo->output_components;
-	dstinfo->data_precision   = srcinfo->data_precision;
-	dstinfo->image_width      = srcinfo->image_width;
-	dstinfo->image_height     = srcinfo->image_height;
+	jpeg_c_set_int_param(jcom, JINT_DC_SCAN_OPT_MODE, 1);
+	jpeg_set_quality    (jcom, qmax, TRUE);
 
-	jpeg_set_colorspace(dstinfo, srcinfo->jpeg_color_space);
-	jpeg_set_quality   (dstinfo, qmax, (progss ? TRUE : FALSE));
-	mozj_set_encmethods(dstinfo, progss, arith);
+	jcom->max_v_samp_factor = jdec->max_v_samp_factor;
+	jcom->max_h_samp_factor = jdec->max_h_samp_factor;
 
-	dstinfo->max_v_samp_factor = srcinfo->max_v_samp_factor;
-	dstinfo->max_h_samp_factor = srcinfo->max_h_samp_factor;
-	dstinfo->raw_data_in       = TRUE;
+	jcom->raw_data_in = TRUE;
+	jcom->optimize_coding = TRUE;
+	jcom->dct_method = JDCT_ISLOW;
 
-	for (int i = 0; i < dstinfo->input_components; i++) {
-	  dstinfo->comp_info[i].h_samp_factor = srcinfo->comp_info[i].h_samp_factor;
-	  dstinfo->comp_info[i].v_samp_factor = srcinfo->comp_info[i].v_samp_factor;
-
-	  plane_pointer[i] = dstinfo->mem->alloc_sarray((j_common_ptr)dstinfo, JPOOL_IMAGE, dstinfo->image_width, 32);
+	for (i = 0; i < max_comps; i++) {
+		plane_pointer[i] = (*jcom->mem->alloc_sarray)((j_common_ptr)jcom, JPOOL_IMAGE, jcom->image_width, 32);
 	}
 	/* Fill output img buffer */
-	jpeg_mem_dest(dstinfo, out_jpg, out_size);
+	jpeg_mem_dest(jcom, tmp_data, tmp_size);
 	/* start compression */
-	jpeg_start_compress(dstinfo, TRUE);
+	jpeg_start_compress(jcom, TRUE);
 	/* write image */
-	while (dstinfo->next_scanline < dstinfo->image_height) {
-		jpeg_read_raw_data (srcinfo, plane_pointer, max_scanlines);
-		jpeg_write_raw_data(dstinfo, plane_pointer, max_scanlines);
+	while (jcom->next_scanline < jcom->image_height) {
+		jpeg_read_raw_data (jdec, plane_pointer, max_lines);
+		jpeg_write_raw_data(jcom, plane_pointer, max_lines);
 	}
-	jpeg_finish_compress  ( dstinfo );
-	jpeg_finish_decompress( srcinfo );
+	jpeg_finish_compress  (jcom);
+	jpeg_finish_decompress(jdec);
 }
 
-auto JpgWrk::optim() -> bool
+auto Jpg_optim(Colbi *parent, int index, QByteArray &src_jpg, bool progss, bool arith, int qmax) -> stat_t
 {
-	QByteArray jpg_img;
+	jpeg_error_mgr djerr = { .trace_level = 0 };
+	jpeg_error_mgr cjerr = { .trace_level = 0 };
 
-	bool is_ok = m_parent->qFileLoad(m_index, jpg_img);
-	if ( is_ok ) {
+	jpeg_decompress_struct jdec = { .err = jpeg_std_error(&djerr) };
+	jpeg_compress_struct   jcom = { .err = jpeg_std_error(&cjerr) };
 
-		unsigned long out_size = 0;
-		unsigned char*out_data = nullptr;
+	/* Initialize the JPEG decompression object with default error handling. */
+	jpeg_create_decompress(&jdec);
+	/* Initialize the JPEG compression object with default error handling. */
+	jpeg_create_compress(&jcom);
 
-		j_decompress_ptr srcinfo = new jpeg_decompress_struct;
-		j_compress_ptr   dstinfo = new jpeg_compress_struct;
+	djerr.error_exit = cjerr.error_exit = mozjThrowMsg;
 
-		try {
-			mozjInit(srcinfo, dstinfo, reinterpret_cast<unsigned char*>(jpg_img.data()), jpg_img.size());
-			mozjLosslessOptim(srcinfo, dstinfo, &out_data, &out_size, m_progressive, m_algorithm);
+	unsigned long src_size, out_size, tmp_size;
+	unsigned char*src_data,*out_data,*tmp_data;
 
-			if (m_quality >= 0) {
-				if (m_rawSize > out_size)
-					QCoreApplication::postEvent(m_parent, new TaskEvent(m_index, S_Working, m_rawSize, out_size));
+	stat_t status;
+	int i, diff;
 
-				unsigned long tmp_size = out_size, best_size = 0;
-				unsigned char*tmp_data = nullptr;
+	out_data = tmp_data = nullptr;
+	out_size = tmp_size = diff = 0;
+	src_data = reinterpret_cast<unsigned char*>(src_jpg.data());
+	src_size = src_jpg.size();
+	try {
+		if (qmax >= 0) {
+			mozjInitDecoder(&jdec, &jcom, src_data, src_size);
+			mozjLossyOptim(&jdec, &jcom, &tmp_data, &tmp_size, qmax);
 
-				do {
-					jpeg_mem_src    (srcinfo,        (!best_size ? out_data : tmp_data), tmp_size);
-					jpeg_read_header(srcinfo, TRUE);   best_size = tmp_size;
-					mozjLossyOptim  (srcinfo, dstinfo, &tmp_data, &tmp_size, m_progressive, m_algorithm, m_quality);
-				} while (90 < (best_size - tmp_size));
-
-				if (tmp_size < out_size) {
-					out_data = tmp_data;
-					out_size = tmp_size;
-				}
+			if ((diff = src_size - tmp_size)) {
+				QCoreApplication::postEvent(parent,
+					new TaskEvent(index, S_Working, src_size, tmp_size));
 			}
-		} catch(QString emsg) {
-#ifdef QT_DEBUG
-			qDebug() << "mozjpeg: " << emsg;
-#endif
-			is_ok = false;
 		}
-		jpeg_destroy_compress  ( dstinfo );
-		jpeg_destroy_decompress( srcinfo );
-
-		if (is_ok && m_rawSize > (m_optSize = out_size)) {
-			QByteArray cjpg_out((char*)out_data, out_size);
-			is_ok = m_parent->qFileStore(m_index, cjpg_out, JPG);
-		}
+		mozjInitDecoder(&jdec, &jcom, (diff > 0 ? tmp_data : src_data), (diff > 0 ? tmp_size : src_size));
+		mozjLosslessOptim(&jdec, &jcom, &out_data, &out_size);
+		status = S_Complete;
+	} catch(int ecode) {
+		status = S_Error;
 	}
-	return is_ok;
+	if (status == S_Complete)
+	if (src_jpg.size() > out_size) {
+		src_jpg.resize(  out_size  );
+		for (i = 0; i  < out_size; i++)
+			src_jpg[i] = out_data[i];
+	}
+	/* Finish compression and release memory */
+	if (tmp_size) delete[] tmp_data;
+	jpeg_destroy_compress  (&jcom);
+	jpeg_destroy_decompress(&jdec);
+
+	return status;
 }

@@ -23,12 +23,15 @@ set(build_deps
 	imagequant_a
 	zopfli
 )
+set(project_defs
+	-DWITH_PNG
+)
 
 option(WITH_GIF "enable GIF Optim module" ON)
 if (WITH_GIF)
 
-  set(gifsi_params
-    -DENABLE_SHARED=0 -DBUILD_GIFSICLE=0 -DWITH_SIMD=1)
+	set(gifsi_params
+		-DENABLE_SHARED=0 -DBUILD_GIFSICLE=0 -DWITH_SIMD=1)
 
 	ExternalProject_Add(gifsi
 		SOURCE_DIR ${PROJECT_SOURCE_DIR}/lib/libgifsi
@@ -42,6 +45,7 @@ if (WITH_GIF)
 	)
 	set(build_deps   ${build_deps} gifsi)
 	set(extra_libs   ${extra_libs} libgifsi)
+	set(project_defs ${project_defs} -DWITH_GIF)
 	set(include_dirs ${include_dirs}
 		${PROJECT_SOURCE_DIR}/lib/libgifsi/include
 	)
@@ -70,6 +74,7 @@ if (WITH_JPG)
 	)
 	set(build_deps   ${build_deps} mozjpeg)
 	set(extra_libs   ${extra_libs} libmozjpeg)
+	set(project_defs ${project_defs} -DWITH_JPG)
 	set(include_dirs ${include_dirs}
 		${PROJECT_SOURCE_DIR}/lib/mozjpeg
 		${binary_dir}
@@ -92,9 +97,11 @@ if (WITH_GUI)
 		CONFIGURE_COMMAND ""
 		BUILD_COMMAND ${fonico_dir}/make_ttf.sh ${fonico_params}
 	)
-	set(build_deps ${build_deps} fonico)
+	set(build_deps   ${build_deps} fonico)
+	set(project_defs ${project_defs} -DWITH_GUI)
 endif()
 
 set(PROJECT_EXTRA_LIBS   ${PROJECT_EXTRA_LIBS}   ${extra_libs}   PARENT_SCOPE)
+set(PROJECT_EXTRA_DEFS   ${PROJECT_EXTRA_DEFS}   ${project_defs} PARENT_SCOPE)
 set(PROJECT_INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS} ${include_dirs} PARENT_SCOPE)
 set(PROJECT_DEPENDENCIES ${PROJECT_DEPENDENCIES} ${build_deps}   PARENT_SCOPE)

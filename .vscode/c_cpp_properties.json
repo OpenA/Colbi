@@ -3,15 +3,17 @@
 		{
 			"name": "Linux",
 			"includePath": [
-				"${workspaceFolder}/**",
-				"/usr/include/x86_64-linux-gnu/qt5/**",
-				"/usr/include/x86_64-linux-gnu/qt5"
+				"/usr/include/**",
+				"/usr/local/include/**",
+				"${workspaceFolder}",
+				"${workspaceFolder}/lib/libgifsi/include",
+				"${workspaceFolder}/lib/zopfli/src/zopflipng"
 			],
 			"defines": [],
 			"compilerPath": "/usr/bin/clang-14",
 			"cStandard": "c17",
 			"cppStandard": "c++14",
-			"intelliSenseMode": "linux-clang-x64"
+			"intelliSenseMode": "${default}"
 		}
 	],
 	"version": 4

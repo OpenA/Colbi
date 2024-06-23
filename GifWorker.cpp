@@ -1,7 +1,7 @@
-﻿#include <main.h>
+﻿#include "Colbi.hpp"
 #include <gifsi.h>
 
-static auto gifTryAssignQuantization(Gif_Stream *gStrm, Gif_Dither plan, quint16 colors) -> void
+static auto gifTryAssignQuantization(Gif_Stream *gStrm, Gif_Dither plan, int colors) -> void
 {
 	quint32 ncols;
 	quint8 mW = 3, mH = 3;
@@ -23,53 +23,61 @@ static auto gifTryAssignQuantization(Gif_Stream *gStrm, Gif_Dither plan, quint16
 	Gif_FreeColorTransform(&gCT);
 }
 
-auto GifWrk::optim() -> bool
+auto Gif_optim(Colbi *parent, int index, QByteArray &gif_src, int colors, int plan, float lossy) -> stat_t
 {
-	QByteArray gif_src;
+	stat_t status = S_Error;
 
-	bool is_ok = m_parent->qFileLoad(m_index, gif_src);
+	unsigned char *out_data,*tmp_data = reinterpret_cast<unsigned char *>(gif_src.data());
+	unsigned long  out_size, tmp_size = gif_src.size();
 
-	quint16  colors = 256;
-	Gif_Dither plan = DiP_FloydSteinberg;
+	Gif_Dither dither;
 
-	if (m_colors >= 2 && m_colors <= 256) {
-		colors = m_colors;
-		plan   = (Gif_Dither)(m_dither + 1);
+#ifdef QT_DEBUG
+	QMessageLogger log("GifWorker.cpp", 26, "Gif_optim");
+#endif
+	if (colors < 2 || colors > 256) {
+		colors = 256;
+		dither = DiP_FloydSteinberg;
+	} else {
+		dither = (Gif_Dither)(plan + 1);
 	}
+#ifdef QT_DEBUG
+	log.debug() << "colors: " << colors << " lossy: " << lossy << Qt::endl;
+#endif
+	// create memory object
+	Gif_Stream *stream;
+	Gif_CompressInfo info;
 
-	//qDebug() << "colors: " << colors << " lossy:" << m_lossy;
-	if ( is_ok ) {
-		// create memory object
-		Gif_CompressInfo gCInf = {
-			.flags = GIF_WRITE_DROP_EXTRA | GIF_WRITE_TRUNC_PADS | GIF_OPTIZ_LVL3,
-			.lossy = m_lossy
-		};
-		Gif_Stream *gStrm;
+	info.flags = GIF_WRITE_DROP_EXTRA | GIF_WRITE_TRUNC_PADS | GIF_OPTIZ_LVL3,
+	info.lossy = lossy;
+	// decode gif data from memory
+	if (Gif_NewStream(stream, nullptr) &&
+	    Gif_ReadData( stream, tmp_data, tmp_size )) {
 
-		// decode gif data from memory
-		is_ok = (
-			Gif_NewStream(gStrm, nullptr) &&
-			Gif_ReadData (gStrm, reinterpret_cast<unsigned char *>(gif_src.data()), gif_src.size())
-		);
-		// get frames count
-		if (is_ok)
-			is_ok = !gStrm->errors.num && Gif_GetImagesCount(gStrm);
-		if (is_ok) {
-			unsigned long  out_size;
-			unsigned char *out_data;
+		int i = Gif_GetImagesCount(stream); // get frames count
+		if (i != 0) {
+			if (stream->global->ncol > colors || stream->has_local_colors)
+				gifTryAssignQuantization(stream, dither, colors);
 
-			if (gStrm->global->ncol > colors || gStrm->has_local_colors)
-				gifTryAssignQuantization(gStrm, plan, colors);
+			/* ~~~~ */ Gif_FullOptimize (stream, info);
+			out_size = Gif_FullWriteData(stream, info, &out_data);
 
-			/* ~~~~ */ Gif_FullOptimize (gStrm, gCInf);
-			out_size = Gif_FullWriteData(gStrm, gCInf, &out_data);
-
-			if (is_ok && m_rawSize > (m_optSize = out_size)) {
-				QByteArray cgif_out((char*)out_data, out_size);
-				is_ok = m_parent->qFileStore(m_index, cgif_out, GIF);
+			if (gif_src.size() > out_size) {
+				gif_src.resize(  out_size  );
+				for (i = 0; i  < out_size; i++)
+					gif_src[i] = out_data[i];
 			}
 		}
-		Gif_FreeStream(gStrm);
+#ifdef QT_DEBUG
+		else
+			log.warning("no frames in image");
+#endif
+		status = S_Complete;
 	}
-	return is_ok;
+#ifdef QT_DEBUG
+	else
+		log.fatal("can't read data");
+#endif
+	Gif_FreeStream(stream);
+	return status;
 }

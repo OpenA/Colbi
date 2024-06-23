@@ -21,9 +21,12 @@ set(TS_FILES
 )
 set(PROJECT_DEPENDENCIES "")
 set(PROJECT_EXTRA_LIBS   "")
-set(PROJECT_INCLUDE_DIRS "")
+set(PROJECT_INCLUDE_DIRS "src")
+set(PROJECT_EXTRA_DEFS   "")
 set(PROJECT_SOURCES
 	main.cpp
+	src/Colbi.hpp
+	src/Colbi.cpp
 	GifWorker.cpp
 	JpgWorker.cpp
 	PngWorker.cpp
@@ -62,7 +65,7 @@ message(STATUS "dependencies: ${PROJECT_DEPENDENCIES}")
 add_dependencies(Colbi ${PROJECT_DEPENDENCIES})
 
 target_include_directories(Colbi SYSTEM AFTER PUBLIC ${PROJECT_INCLUDE_DIRS})
-target_compile_definitions(Colbi PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
+target_compile_definitions(Colbi PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG> ${PROJECT_EXTRA_DEFS})
 target_link_libraries     (Colbi PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick ${PROJECT_EXTRA_LIBS})
 
 set_target_properties(Colbi PROPERTIES
