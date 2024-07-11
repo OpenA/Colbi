@@ -5,6 +5,10 @@
 
 typedef std::vector<unsigned char> U8ClampVec;
 
+struct result_t {
+	int err, sz;
+};
+
 static auto TryQuantize(U8ClampVec& raw_pix, unsigned int w, unsigned int h, int qmin, U8ClampVec& quanz_png) -> bool
 {
 	// You could set more options here, like liq_set_last_index_transparent(options, 200000);
@@ -60,43 +64,45 @@ static auto TryQuantize(U8ClampVec& raw_pix, unsigned int w, unsigned int h, int
 
 //returns 0 if all went ok, non-0 if error
 //output image is always given in RGBA (with alpha channel), even if it's a BMP without alpha channel
-static auto decodePixData(QByteArray& src_png, qint8 qmin, U8ClampVec& quanz_png) -> int
+static auto decodePixData(const QByteArray &src_png, qint8 qmin, U8ClampVec &qnz_png) -> result_t
 {
-	U8ClampVec raw_pixels, qnz_pixels;
-	unsigned int w, h;
-	int ecode = 0;
+	U8ClampVec raw_pixels;
 
-	unsigned char *src_data = reinterpret_cast<unsigned char*>(src_png.data());
-	unsigned int   src_size = src_png.size();
+	unsigned int w, h, png_pos, pix_offset;
+	unsigned int x, y, bmp_pos, line_bytes;
+
+	result_t res = {0,0};
+
+	unsigned char const *src_data = reinterpret_cast<unsigned char const*>(src_png.data());
 
 	if (src_png.at(0) == 'B' &&
 		src_png.at(1) == 'M' &&
 		src_png.at(2) == 'P')
 	{
-		unsigned int pix_offset, line_bytes, x, y;
-		unsigned char fff, bpp;
-
-		if (src_size < 54)
-			return -2; // minimum BMP header size
-
+		if (src_png.size() < 54) {
+			res.err = -2; // minimum BMP header size
+			return res;
+		}
 		// where the pixel data starts
 		pix_offset = (unsigned)src_png.at(10) + 256 * (unsigned)src_png.at(11); 
 		// read width and height from BMP header
 		w = (unsigned)src_png.at(18) + (unsigned)src_png.at(19) * 256;
 		h = (unsigned)src_png.at(22) + (unsigned)src_png.at(23) * 256;
-		// read bit per pixel
-		bpp = src_png.at(28),
-		fff = bpp == 24 ? 0xFF : 0;
-		if (bpp != 24 && bpp != 32)
-			return -3; // only 24-bit and 32-bit BMPs are supported.
+		// read bit per pixel and perform to bytes per pixel
+		const int bpp = src_png.at(28) / 8;
+		if (bpp != 3 && bpp != 4) {
+			res.err = -3; // only 24-bit and 32-bit BMPs are supported.
+			return res;
+		}
 		// The amount of scanline bytes is width of image times channels, with extra bytes added if needed
 		// to make it a multiple of 4 bytes.
-		bpp /= 8, // perform to bytes per pixel
 		line_bytes = w * bpp;
 		if (line_bytes % 4 != 0)
 			line_bytes = (line_bytes / 4) * 4 + 4;
-		if (src_size < line_bytes * h + pix_offset)
-			return -2; // BMP file too small to contain all pixels
+		if (src_png.size() < (line_bytes * h + pix_offset)) {
+			res.err = -2;
+			return res; // BMP file too small to contain all pixels
+		}
 		raw_pixels.resize(w * h * 4);
 		/*
 		There are 3 differences between BMP and the raw image buffer for LodePNG:
@@ -108,44 +114,43 @@ static auto decodePixData(QByteArray& src_png, qint8 qmin, U8ClampVec& quanz_png
 		for (y = 0; y < h; y++) {
 			for (x = 0; x < w; x++) {
 				// pixel start byte position in the new raw image
-				unsigned pngpos = 4 * y * w + 4 * x,
+				png_pos = 4 * y * w + 4 * x,
 				// pixel start byte position in the BMP
-				         bmpos = pix_offset + (h - y - 1) * line_bytes + bpp * x;
-				raw_pixels[pngpos + 0] = src_png.at(bmpos + 2); // R
-				raw_pixels[pngpos + 1] = src_png.at(bmpos + 1); // G
-				raw_pixels[pngpos + 2] = src_png.at(bmpos + 0); // B
-				raw_pixels[pngpos + 3] = fff ? fff : src_png.at(bmpos + 3); // A
+				bmp_pos = pix_offset + (h - y - 1) * line_bytes + bpp * x;
+				raw_pixels[png_pos + 0] = src_png.at(bmp_pos + 2); // R
+				raw_pixels[png_pos + 1] = src_png.at(bmp_pos + 1); // G
+				raw_pixels[png_pos + 2] = src_png.at(bmp_pos + 0); // B
+				raw_pixels[png_pos + 3] = bpp == 3 ? 0xFF : src_png.at(bmp_pos + 3); // A
 			}
 		}
 		/* Try apply Quantization */
-		if (!TryQuantize(raw_pixels, w, h, qmin, quanz_png)) {
-			ecode = lodepng::encode(quanz_png, raw_pixels, w, h);
-		}
+		if (!TryQuantize(raw_pixels, w, h, qmin, qnz_png))
+			res.err = lodepng::encode(qnz_png, raw_pixels, w, h);
+		res.sz = qnz_png.size();
 	} else {
 		// decode PNG as raw RGBA pixels
-		if (!(ecode = lodepng::decode(raw_pixels, w, h, src_data, src_size))) {
+		if (!(res.err = lodepng::decode(raw_pixels, w, h, src_data, src_png.size()))) {
 			/* Try apply Quantization */
-			if (!TryQuantize(raw_pixels, w, h, qmin, quanz_png)) {
-				quanz_png.assign(src_data, src_data + src_size);
-			}
+			bool ok = TryQuantize(raw_pixels, w, h, qmin, qnz_png);
+			// store quantization size anyway
+			res.sz = ok ? qnz_png.size() : src_png.size();
+			// if quatized version larger than src
+			MergeSmaller(qnz_png, src_png, src_png.size(), !ok);
 		}
 	}
-	return ecode;
+	return res;
 }
 
 auto Png_optim(Colbi *parent, int index, QByteArray &src_png, bool rgb8b, int  qmin) -> stat_t
 {
 	U8ClampVec qnz_png, opt_png;
 
-	int ecode = decodePixData(src_png, qmin, qnz_png);
-	if (ecode == 0) {
+	result_t res = decodePixData(src_png, qmin, qnz_png);
+	if (!res.err) {
 
-		int i, src_sz = src_png.size(),
-		       opt_sz = qnz_png.size();
-
-		if (src_sz != opt_sz)
+		if (src_png.size() != res.sz)
 			QCoreApplication::postEvent(parent,
-				new TaskEvent(index, S_Working, src_sz, opt_sz));
+				new TaskEvent(index, S_Working, src_png.size(), res.sz));
 
 		ZopfliPNGOptions options;
 
@@ -154,16 +159,11 @@ auto Png_optim(Colbi *parent, int index, QByteArray &src_png, bool rgb8b, int  q
 		options.verbose           = false,
 		options.use_zopfli        = true;
 
-		ecode = ZopfliPNGOptimize(qnz_png, options, false, &opt_png);
-
-		if (ecode == 0)
-		if (src_png.size() > opt_png.size()) {
-			src_png.resize(  opt_png.size());
-			for (i = 0; i  < opt_png.size(); i++)
-				src_png[i] = opt_png[i];
-		}
+		res.err = ZopfliPNGOptimize(qnz_png, options, false, &opt_png);
+		if (!res.err)
+			MergeSmaller(src_png, opt_png, opt_png.size(), false);
 	}
-	switch (ecode) {
+	switch (res.err) {
 	case  0:
 		return S_Complete;
 	case -1:
@@ -172,7 +172,7 @@ auto Png_optim(Colbi *parent, int index, QByteArray &src_png, bool rgb8b, int  q
 		break;
 	case -3: qWarning("only 24/32-bit BMPs are supported");
 		break;
-	default: qWarning() << "lodepng:" << lodepng_error_text(ecode);
+	default: qWarning() << "lodepng:" << lodepng_error_text(res.err);
 	}
 	return S_Error;
 }

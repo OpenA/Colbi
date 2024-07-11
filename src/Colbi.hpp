@@ -131,4 +131,14 @@ stat_t Jpg_optim(Colbi *, int index, QByteArray &src_jpg, bool progss, bool arit
 stat_t Gif_optim(Colbi *, int index, QByteArray &gif_src, int colors, int plan, float lossy);
 # endif
 
+template<typename A, typename B>
+static inline void MergeSmaller(A& dst_dat, B& src_dat, int src_sz, bool force) {
+	int i;
+	if (dst_dat.size() > src_sz || force) {
+		dst_dat.resize(  src_sz  );
+		for (i = 0; i  < src_sz; i++)
+			dst_dat[i] = src_dat[i];
+	}
+}
+
 #endif // _COLBI_H_

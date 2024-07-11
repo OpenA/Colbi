@@ -6,6 +6,7 @@
 				"/usr/include/**",
 				"/usr/local/include/**",
 				"${workspaceFolder}",
+				"${workspaceFolder}/lib/libimagequant",
 				"${workspaceFolder}/lib/libgifsi/include",
 				"${workspaceFolder}/lib/zopfli/src/zopflipng"
 			],

@@ -34,10 +34,12 @@ ApplicationWindow {
 			colbi.doTask(num, Colbi.AStart);
 		}
 		onTaskProgress   : {
-			const task = taskListModel.get(num);
-			[task.fileSize, task.sizeEx, task.compress] = Themes.toPreferStr(
-				new_size, (orig_size - new_size) / (orig_size / 100)
-			);
+			const task = taskListModel.get(num),
+			      diff = orig_size - new_size,
+			   [s,e,c] = Themes.toPreferStr(new_size, diff / (orig_size/100));
+			if (diff > 0)
+				task.fileSize = s, task.sizeEx = e;
+				task.compress = c;
 		}
 		onStatusUpdate   : {
 			const task = taskListModel.get(num);

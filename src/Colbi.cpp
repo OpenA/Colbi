@@ -131,9 +131,11 @@ auto Colbi::taskCreate(QString name, QString absfile, size_t size) -> void
 # endif
 	  : UnknownFile );
 
-	if (type == UnknownFile)
+	if (type == UnknownFile) {
 		status = S_Unknown;
-
+		if (!mime.name().startsWith("image"))
+			return;
+	}
 	taskList.append( TaskWrk(size, type) );
 	fileList.append( absfile );
 

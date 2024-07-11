@@ -140,11 +140,7 @@ auto Jpg_optim(Colbi *parent, int index, QByteArray &src_jpg, bool progss, bool 
 		status = S_Error;
 	}
 	if (status == S_Complete)
-	if (src_jpg.size() > out_size) {
-		src_jpg.resize(  out_size  );
-		for (i = 0; i  < out_size; i++)
-			src_jpg[i] = out_data[i];
-	}
+		MergeSmaller(src_jpg, out_data, out_size, false);
 	/* Finish compression and release memory */
 	if (tmp_size) delete[] tmp_data;
 	jpeg_destroy_compress  (&jcom);

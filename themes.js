@@ -20,9 +20,9 @@ const toPreferStr = (size = 0, rate = 0) => [`${
 
 const default_stat = {
 	statIdle    : "transparent",
-	statWorking : "darkcyan",
+	statWorking : "orange",
 	statComplete: "#00C963",
-	statPaused  : "orange",
+	statPaused  : "darkcyan",
 	statError   : "#cd0000",
 	statUnknown : "slategray"
 }
