@@ -98,7 +98,7 @@ static inline void mozjLossyOptim(
 	jpeg_finish_decompress(jdec);
 }
 
-auto Jpg_optim(Colbi *parent, int index, QByteArray &src_jpg, bool progss, bool arith, int qmax) -> stat_t
+auto Colbi::Jpg_optim(int index, QByteArray &src_jpg, bool progss, bool arith, int qmax) -> stat_t
 {
 	jpeg_error_mgr djerr = { .trace_level = 0 };
 	jpeg_error_mgr cjerr = { .trace_level = 0 };
@@ -129,7 +129,7 @@ auto Jpg_optim(Colbi *parent, int index, QByteArray &src_jpg, bool progss, bool 
 			mozjLossyOptim(&jdec, &jcom, &tmp_data, &tmp_size, qmax);
 
 			if ((diff = src_size - tmp_size)) {
-				QCoreApplication::postEvent(parent,
+				QCoreApplication::postEvent(this,
 					new TaskEvent(index, S_Working, src_size, tmp_size));
 			}
 		}

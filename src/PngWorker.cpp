@@ -141,7 +141,7 @@ static auto decodePixData(const QByteArray &src_png, qint8 qmin, U8ClampVec &qnz
 	return res;
 }
 
-auto Png_optim(Colbi *parent, int index, QByteArray &src_png, bool rgb8b, int  qmin) -> stat_t
+auto Colbi::Png_optim(int index, QByteArray &src_png, bool rgb8b, int  qmin) -> stat_t
 {
 	U8ClampVec qnz_png, opt_png;
 
@@ -149,7 +149,7 @@ auto Png_optim(Colbi *parent, int index, QByteArray &src_png, bool rgb8b, int  q
 	if (!res.err) {
 
 		if (src_png.size() != res.sz)
-			QCoreApplication::postEvent(parent,
+			QCoreApplication::postEvent(this,
 				new TaskEvent(index, S_Working, src_png.size(), res.sz));
 
 		ZopfliPNGOptions options;

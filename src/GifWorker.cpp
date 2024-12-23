@@ -23,7 +23,7 @@ static auto gifTryAssignQuantization(Gif_Stream *gStrm, Gif_Dither plan, int col
 	Gif_FreeColorTransform(&gCT);
 }
 
-auto Gif_optim(Colbi *parent, int index, QByteArray &gif_src, int colors, int plan, float lossy) -> stat_t
+auto Colbi::Gif_optim(int index, QByteArray &gif_src, int colors, int plan, float lossy) -> stat_t
 {
 	stat_t status = S_Error;
 
@@ -69,14 +69,12 @@ auto Gif_optim(Colbi *parent, int index, QByteArray &gif_src, int colors, int pl
 			}
 		}
 #ifdef QT_DEBUG
-		else
-			log.warning("no frames in image");
+		else log.warning("no frames in image");
 #endif
 		status = S_Complete;
 	}
 #ifdef QT_DEBUG
-	else
-		log.fatal("can't read data");
+	else log.fatal("can't read data");
 #endif
 	Gif_FreeStream(stream);
 	return status;

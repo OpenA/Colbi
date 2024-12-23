@@ -121,15 +121,16 @@ public slots:
 	void setOptionBool( const QString key, bool    b ) { m_settings->setValue(key, (m_OptBool[key] = b)); }
 	void setOptionInt ( const QString key, int     i ) { m_settings->setValue(key, (m_OptInt [key] = i)); }
 	void setOptionReal( const QString key, double  f ) { m_settings->setValue(key, (m_OptReal[key] = f)); }
-};
+public:
 
-stat_t Png_optim(Colbi *, int index, QByteArray &src_png, bool rgb8b, int  qmin);
+	stat_t Png_optim(int index, QByteArray &src_png, bool rgb8b, int  qmin);
 # ifdef WITH_JPG
-stat_t Jpg_optim(Colbi *, int index, QByteArray &src_jpg, bool progss, bool arith, int qmax);
+	stat_t Jpg_optim(int index, QByteArray &src_jpg, bool progss, bool arith, int qmax);
 # endif
 # ifdef WITH_GIF
-stat_t Gif_optim(Colbi *, int index, QByteArray &gif_src, int colors, int plan, float lossy);
+	stat_t Gif_optim(int index, QByteArray &gif_src, int colors, int plan, float lossy);
 # endif
+};
 
 template<typename A, typename B>
 static inline void MergeSmaller(A& dst_dat, B& src_dat, int src_sz, bool force) {

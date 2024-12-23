@@ -66,13 +66,13 @@ auto Colbi::taskWorker(const int idx) -> void
 	if (qFileLoad(path, blob)) {
 		switch (task.type()) {
 		case ImgPNG:
-			status = Png_optim(this, idx, blob,
+			status = Png_optim(idx, blob,
 				m_OptBool["PNG/rgb8bit"   ],
 				m_OptInt ["PNG/minQuality"]);
 			break;
 		case ImgJPG:
 # ifdef WITH_JPG
-			status = Jpg_optim(this, idx, blob,
+			status = Jpg_optim(idx, blob,
 				m_OptBool["JPEG/progressive"],
 				m_OptInt ["JPEG/arithmetic" ],
 				m_OptInt ["JPEG/maxQuality" ]);
@@ -80,7 +80,7 @@ auto Colbi::taskWorker(const int idx) -> void
 			break;
 		case ImgGIF:
 # ifdef WITH_GIF
-			status = Gif_optim(this, idx, blob,
+			status = Gif_optim(idx, blob,
 				m_OptInt ["GIF/maxColors"  ],
 				m_OptInt ["GIF/ditherPlan" ],
 				m_OptReal["GIF/lossQuality"]);
